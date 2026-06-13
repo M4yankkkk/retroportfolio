@@ -15,7 +15,7 @@ const SKILLS = [
   { name: 'DESIGN_UI.EXE',    pct: 80, color: '#33ff33' },
 ]
 
-const BAR_TOTAL = 20
+const BAR_TOTAL = 12
 
 function SkillBar({ skill, animate }) {
   const [filled, setFilled] = useState(0)
@@ -32,18 +32,15 @@ function SkillBar({ skill, animate }) {
     return () => clearInterval(interval)
   }, [animate, skill.pct])
 
-  const target = Math.round((skill.pct / 100) * BAR_TOTAL)
-  const bar = '█'.repeat(filled) + '░'.repeat(BAR_TOTAL - filled)
-
   return (
-    <div className="retro-progress" style={{ marginBottom: 8 }}>
-      <div style={{ fontSize: '0.85rem', marginBottom: 2, color: skill.color }}>
+    <div className="retro-progress">
+      <div style={{ fontSize: '0.8rem', marginBottom: 1, color: skill.color }}>
         {skill.name}
       </div>
-      <div style={{ fontSize: '0.95rem', letterSpacing: '0.03em' }}>
+      <div style={{ fontSize: '0.85rem', letterSpacing: '0.05em', whiteSpace: 'nowrap' }}>
         <span className="bar-fill" style={{ color: skill.color }}>{'█'.repeat(filled)}</span>
         <span className="bar-track" style={{ color: 'rgba(51,255,51,0.2)' }}>{'░'.repeat(BAR_TOTAL - filled)}</span>
-        <span style={{ marginLeft: 8, color: 'rgba(51,255,51,0.7)', fontSize: '0.8rem' }}>
+        <span style={{ marginLeft: 6, color: 'rgba(51,255,51,0.7)', fontSize: '0.75rem' }}>
           {skill.pct}%
         </span>
       </div>
@@ -65,18 +62,22 @@ export default function Skills() {
   }, [])
 
   return (
-    <div className="dos-window" ref={ref} style={{ width: '340px', fontSize: '0.9rem' }}>
+    <div className="dos-window" ref={ref} style={{ width: '380px', fontSize: '0.85rem' }}>
       <div className="dos-titlebar">
         <span>■ SYSINFO.EXE — SKILLS</span>
         <span>[ □ ] [ ✕ ]</span>
       </div>
-      <div className="dos-content" style={{ padding: '12px 14px' }}>
-        <div className="terminal-line amber" style={{ marginBottom: 10, fontSize: '0.85rem' }}>
+      <div className="dos-content" style={{ padding: '10px 12px' }}>
+        <div className="terminal-line amber" style={{ marginBottom: 8, fontSize: '0.8rem' }}>
           C:\&gt; sysinfo /skills /verbose
         </div>
-        {SKILLS.map((skill) => (
-          <SkillBar key={skill.name} skill={skill} animate={animate} />
-        ))}
+        
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', columnGap: '16px', rowGap: '8px' }}>
+          {SKILLS.map((skill) => (
+            <SkillBar key={skill.name} skill={skill} animate={animate} />
+          ))}
+        </div>
+
         <div style={{ marginTop: 10 }}>
           <span className="terminal-line" style={{ opacity: 0.5 }}>C:\&gt; </span>
           <span className="cursor-blink" />

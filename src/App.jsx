@@ -83,11 +83,11 @@ function AudioToggle() {
 
 // ─── Scroll Section Markers ──────────────────────────────────────────────────
 const SECTIONS = [
-  { id: 'hero',     label: 'BOOT' },
-  { id: 'about',    label: 'ABOUT' },
+  { id: 'hero', label: 'BOOT' },
+  { id: 'about', label: 'ABOUT' },
   { id: 'projects', label: 'PROJECTS' },
-  { id: 'skills',   label: 'SKILLS' },
-  { id: 'contact',  label: 'CONTACT' },
+  { id: 'skills', label: 'SKILLS' },
+  { id: 'contact', label: 'CONTACT' },
 ]
 
 // ─── Nav ─────────────────────────────────────────────────────────────────────
@@ -131,17 +131,39 @@ function RetroNav({ activeSection }) {
 }
 
 // ─── Main App ────────────────────────────────────────────────────────────────
+const CAMERA_PRESETS = {
+  hero: { pos: [-0.66, -0.06, 1.28], tgt: [0.27, -0.31, -0.28] }, // User defined
+  about: { pos: [0.08, -0.06, 1.56], tgt: [0.08, -0.31, -0.32] }, // Swung to the right side
+  projects: { pos: [0.38, 0.28, 1.07], tgt: [-0.24, -0.42, -0.04] }, // Swung to the far left side
+  skills: { pos: [-0.38, 0.29, 1.13], tgt: [0.3, -0.33, -0.04] }, // Top-down angled view
+  contact: { pos: [-0.04, 0.23, 1.41], tgt: [0.14, -0.38, -0.35] }, // Close-up lower front view
+}
+
 export default function App() {
   const [loadProgress, setLoadProgress] = useState(0)
-  const [loadDone, setLoadDone]         = useState(false)
+  const [loadDone, setLoadDone] = useState(false)
   const [activeSection, setActiveSection] = useState('hero')
-  const [isMobile, setIsMobile]         = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
 
   // Camera state — mutable refs so R3F can read each frame without re-renders
   const cameraState = useRef({
     position: new THREE.Vector3(0.3, 0.9, 2.2),
-    target:   new THREE.Vector3(0, 0.42, 0),
+    target: new THREE.Vector3(0, 0.42, 0),
   })
+
+  // Sync debug sliders when scrolling to a new section
+  useEffect(() => {
+    const p = CAMERA_PRESETS[activeSection]
+    if (p) {
+      setDebugCam({ x: p.pos[0], y: p.pos[1], z: p.pos[2], tx: p.tgt[0], ty: p.tgt[1], tz: p.tgt[2] })
+    }
+  }, [activeSection])
+
+  // Apply slider values directly to the camera refs
+  useEffect(() => {
+    cameraState.current.position.set(debugCam.x, debugCam.y, debugCam.z)
+    cameraState.current.target.set(debugCam.tx, debugCam.ty, debugCam.tz)
+  }, [debugCam])
 
   // ── Detect mobile ──
   useEffect(() => {
@@ -192,32 +214,35 @@ export default function App() {
   useEffect(() => {
     if (!loadDone || isMobile) return
 
-    const CAMERA_PRESETS = {
-      hero:     { pos: [0.3, 0.9, 2.2],   tgt: [0, 0.42, 0] },
-      about:    { pos: [1.2, 0.7, 1.8],   tgt: [0, 0.42, 0] },
-      projects: { pos: [-1.0, 0.7, 1.8],  tgt: [0, 0.42, 0] },
-      skills:   { pos: [0, 1.1, 1.9],     tgt: [0, 0.42, 0] },
-      contact:  { pos: [0.2, 0.5, 1.7],   tgt: [0, 0.42, 0] },
-    }
-
     const triggers = []
 
+    let prevId = SECTIONS[0].id
     SECTIONS.slice(1).forEach(({ id }) => {
       const cfg = CAMERA_PRESETS[id]
-      const el  = document.getElementById(`section-${id}`)
+      const prevCfg = CAMERA_PRESETS[prevId]
+      const el = document.getElementById(`section-${id}`)
       if (!el) return
 
-      const t1 = gsap.to(cameraState.current.position, {
-        x: cfg.pos[0], y: cfg.pos[1], z: cfg.pos[2],
-        ease: 'power2.inOut',
-        scrollTrigger: { trigger: el, start: 'top 75%', end: 'top 25%', scrub: 2 },
-      })
-      const t2 = gsap.to(cameraState.current.target, {
-        x: cfg.tgt[0], y: cfg.tgt[1], z: cfg.tgt[2],
-        ease: 'power2.inOut',
-        scrollTrigger: { trigger: el, start: 'top 75%', end: 'top 25%', scrub: 2 },
-      })
+      const t1 = gsap.fromTo(cameraState.current.position,
+        { x: prevCfg.pos[0], y: prevCfg.pos[1], z: prevCfg.pos[2] },
+        {
+          x: cfg.pos[0], y: cfg.pos[1], z: cfg.pos[2],
+          ease: 'power2.inOut',
+          scrollTrigger: { trigger: el, start: 'top 75%', end: 'top 25%', scrub: 2 },
+          immediateRender: false
+        }
+      )
+      const t2 = gsap.fromTo(cameraState.current.target,
+        { x: prevCfg.tgt[0], y: prevCfg.tgt[1], z: prevCfg.tgt[2] },
+        {
+          x: cfg.tgt[0], y: cfg.tgt[1], z: cfg.tgt[2],
+          ease: 'power2.inOut',
+          scrollTrigger: { trigger: el, start: 'top 75%', end: 'top 25%', scrub: 2 },
+          immediateRender: false
+        }
+      )
       triggers.push(t1, t2)
+      prevId = id
     })
 
     // Section detection for nav highlight & screen content
@@ -228,7 +253,7 @@ export default function App() {
         trigger: el,
         start: 'top 55%',
         end: 'bottom 45%',
-        onEnter:     () => setActiveSection(id),
+        onEnter: () => setActiveSection(id),
         onEnterBack: () => setActiveSection(id),
       })
     })

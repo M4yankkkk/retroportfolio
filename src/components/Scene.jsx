@@ -66,11 +66,11 @@ function Desk() {
  */
 function ScreenContent({ activeSection }) {
   const map = {
-    hero:     <Hero />,
-    about:    <About />,
+    hero: <Hero />,
+    about: <About />,
     projects: <Projects />,
-    skills:   <Skills />,
-    contact:  <Contact />,
+    skills: <Skills />,
+    contact: <Contact />,
   }
   return map[activeSection] || <Hero />
 }
@@ -142,21 +142,20 @@ export default function Scene({ cameraState, activeSection, isMobile }) {
 
       {/* PCjr model — streams in with Draco, fallback to box placeholder */}
       <Suspense fallback={<PCjrPlaceholder mouseParallax={mouseParallax.current} />}>
-        <PCjr mouseParallax={mouseParallax.current} />
-
-        {/* Screen HTML overlay — centered on the CRT screen face */}
-        <Html
-          position={[0, 0.42, 0.32]}
-          transform
-          occlude={false}
-          scale={0.32}
-          distanceFactor={1}
-          style={{ userSelect: 'none', pointerEvents: 'auto' }}
-        >
-          <div style={{ width: 280, marginLeft: -140, marginTop: -70 }}>
-            <ScreenContent activeSection={activeSection} />
-          </div>
-        </Html>
+        <PCjr mouseParallax={mouseParallax.current}>
+          {/* Screen HTML overlay — centered on the CRT screen face */}
+          <Html
+            position={[0.06, 0.42, 0.41]}
+            transform
+            scale={0.30}
+            distanceFactor={1}
+            style={{ userSelect: 'none', pointerEvents: 'auto' }}
+          >
+            <div style={{ width: 280, marginLeft: -140, marginTop: -70 }}>
+              <ScreenContent activeSection={activeSection} />
+            </div>
+          </Html>
+        </PCjr>
       </Suspense>
 
       {/* ── Post Processing ── */}

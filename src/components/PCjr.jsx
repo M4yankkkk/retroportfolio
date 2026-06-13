@@ -13,7 +13,7 @@ useGLTF.preload('/models/pcjr.glb', true)
  *
  * From the inspect: Y-span ≈ 420 units, so target height of ~1.4 Three.js units.
  */
-export default function PCjr({ mouseParallax = { x: 0, y: 0 } }) {
+export default function PCjr({ mouseParallax = { x: 0, y: 0 }, children }) {
   const group = useRef()
   const { scene } = useGLTF('/models/pcjr.glb', true)
 
@@ -57,7 +57,7 @@ export default function PCjr({ mouseParallax = { x: 0, y: 0 } }) {
   useFrame(({ clock }) => {
     if (!group.current) return
     const t = clock.getElapsedTime()
-    group.current.position.y = Math.sin(t * 0.5) * 0.03
+    // group.current.position.y = Math.sin(t * 0.5) * 0.03
     group.current.rotation.y = mouseParallax.x * 0.10
     group.current.rotation.x = mouseParallax.y * 0.05
   })
@@ -71,6 +71,7 @@ export default function PCjr({ mouseParallax = { x: 0, y: 0 } }) {
       rotation={[0, Math.PI / 6, 0]}  /* slight 3/4 angle */
     >
       <primitive object={scene} />
+      {children}
     </group>
   )
 }
