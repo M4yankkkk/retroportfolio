@@ -16,6 +16,21 @@ import Contact from '../sections/Contact'
 const SCREEN_SECTIONS = ['hero', 'about', 'projects', 'skills', 'contact']
 
 /**
+ * HtmlRig — applies htmlState dynamically.
+ */
+function HtmlRig({ htmlState, children }) {
+  const groupRef = useRef()
+  useFrame(() => {
+    if (!htmlState || !groupRef.current) return
+    groupRef.current.position.copy(htmlState.position)
+    // Three.js doesn't have a Vector3.setScalar to scale easily via .copy from a single value if it's passed as a Vector3,
+    // but in App.jsx we set htmlState.current.scale to a Vector3 (via .setScalar), so we can just .copy it:
+    groupRef.current.scale.copy(htmlState.scale)
+  })
+  return <group ref={groupRef}>{children}</group>
+}
+
+/**
  * CameraRig — reads cameraState (position + target vectors) updated by scroll,
  * and smoothly lerps the R3F camera each frame.
  */
@@ -78,7 +93,7 @@ function ScreenContent({ activeSection }) {
 /**
  * The main R3F scene graph.
  */
-export default function Scene({ cameraState, activeSection, isMobile }) {
+export default function Scene({ cameraState, htmlState, activeSection, isMobile }) {
   const mouseParallax = useRef({ x: 0, y: 0 })
 
   useEffect(() => {
@@ -144,17 +159,17 @@ export default function Scene({ cameraState, activeSection, isMobile }) {
       <Suspense fallback={<PCjrPlaceholder mouseParallax={mouseParallax.current} />}>
         <PCjr mouseParallax={mouseParallax.current}>
           {/* Screen HTML overlay — centered on the CRT screen face */}
-          <Html
-            position={[0.06, 0.42, 0.41]}
-            transform
-            scale={0.30}
-            distanceFactor={1}
-            style={{ userSelect: 'none', pointerEvents: 'auto' }}
-          >
-            <div style={{ width: 280, marginLeft: -140, marginTop: -70 }}>
-              <ScreenContent activeSection={activeSection} />
-            </div>
-          </Html>
+          <HtmlRig htmlState={htmlState}>
+            <Html
+              transform
+              distanceFactor={1}
+              style={{ userSelect: 'none', pointerEvents: 'auto' }}
+            >
+              <div style={{ width: 280, marginLeft: -140, marginTop: -70 }}>
+                <ScreenContent activeSection={activeSection} />
+              </div>
+            </Html>
+          </HtmlRig>
         </PCjr>
       </Suspense>
 

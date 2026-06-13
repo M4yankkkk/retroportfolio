@@ -132,11 +132,11 @@ function RetroNav({ activeSection }) {
 
 // ─── Main App ────────────────────────────────────────────────────────────────
 const CAMERA_PRESETS = {
-  hero: { pos: [-0.66, -0.06, 1.28], tgt: [0.27, -0.31, -0.28] }, // User defined
-  about: { pos: [0.08, -0.06, 1.56], tgt: [0.08, -0.31, -0.32] }, // Swung to the right side
-  projects: { pos: [0.38, 0.28, 1.07], tgt: [-0.24, -0.42, -0.04] }, // Swung to the far left side
-  skills: { pos: [-0.38, 0.29, 1.13], tgt: [0.3, -0.33, -0.04] }, // Top-down angled view
-  contact: { pos: [-0.04, 0.23, 1.41], tgt: [0.14, -0.38, -0.35] }, // Close-up lower front view
+  hero: { pos: [-0.55, -0.06, 1.28], tgt: [0.27, -0.31, -0.28], html: { pos: [0.06, 0.42, 0.35], scale: 0.30 } },
+  about: { pos: [0.08, -0.06, 1.56], tgt: [0.08, -0.31, -0.32], html: { pos: [0.06, 0.42, 0.35], scale: 0.30 } },
+  projects: { pos: [0.38, 0.28, 1.07], tgt: [-0.24, -0.42, -0.04], html: { pos: [0.06, 0.42, 0.35], scale: 0.30 } },
+  skills: { pos: [-0.38, 0.29, 1.13], tgt: [0.3, -0.33, -0.04], html: { pos: [0.06, 0.42, 0.35], scale: 0.30 } },
+  contact: { pos: [-0.04, 0.23, 1.41], tgt: [0.14, -0.38, -0.35], html: { pos: [0.06, 0.40, 0.31], scale: 0.30 } },
 }
 
 export default function App() {
@@ -145,10 +145,20 @@ export default function App() {
   const [activeSection, setActiveSection] = useState('hero')
   const [isMobile, setIsMobile] = useState(false)
 
+  const [debugCam, setDebugCam] = useState({ x: 0.3, y: 0.9, z: 2.2, tx: 0, ty: 0.42, tz: 0 })
+  const [debugHtml, setDebugHtml] = useState({ hx: 0.06, hy: 0.42, hz: 0.41, hs: 0.30 })
+  const [savedPresets, setSavedPresets] = useState({})
+
   // Camera state — mutable refs so R3F can read each frame without re-renders
   const cameraState = useRef({
     position: new THREE.Vector3(0.3, 0.9, 2.2),
     target: new THREE.Vector3(0, 0.42, 0),
+  })
+
+  // Html overlay state
+  const htmlState = useRef({
+    position: new THREE.Vector3(0.06, 0.42, 0.41),
+    scale: new THREE.Vector3(0.30, 0.30, 0.30),
   })
 
   // Sync debug sliders when scrolling to a new section
@@ -156,14 +166,17 @@ export default function App() {
     const p = CAMERA_PRESETS[activeSection]
     if (p) {
       setDebugCam({ x: p.pos[0], y: p.pos[1], z: p.pos[2], tx: p.tgt[0], ty: p.tgt[1], tz: p.tgt[2] })
+      setDebugHtml({ hx: p.html.pos[0], hy: p.html.pos[1], hz: p.html.pos[2], hs: p.html.scale })
     }
   }, [activeSection])
 
-  // Apply slider values directly to the camera refs
+  // Apply slider values directly to the camera and html refs
   useEffect(() => {
     cameraState.current.position.set(debugCam.x, debugCam.y, debugCam.z)
     cameraState.current.target.set(debugCam.tx, debugCam.ty, debugCam.tz)
-  }, [debugCam])
+    htmlState.current.position.set(debugHtml.hx, debugHtml.hy, debugHtml.hz)
+    htmlState.current.scale.setScalar(debugHtml.hs)
+  }, [debugCam, debugHtml])
 
   // ── Detect mobile ──
   useEffect(() => {
@@ -241,7 +254,25 @@ export default function App() {
           immediateRender: false
         }
       )
-      triggers.push(t1, t2)
+      const t3 = gsap.fromTo(htmlState.current.position,
+        { x: prevCfg.html.pos[0], y: prevCfg.html.pos[1], z: prevCfg.html.pos[2] },
+        {
+          x: cfg.html.pos[0], y: cfg.html.pos[1], z: cfg.html.pos[2],
+          ease: 'power2.inOut',
+          scrollTrigger: { trigger: el, start: 'top 75%', end: 'top 25%', scrub: 2 },
+          immediateRender: false
+        }
+      )
+      const t4 = gsap.fromTo(htmlState.current.scale,
+        { x: prevCfg.html.scale, y: prevCfg.html.scale, z: prevCfg.html.scale },
+        {
+          x: cfg.html.scale, y: cfg.html.scale, z: cfg.html.scale,
+          ease: 'power2.inOut',
+          scrollTrigger: { trigger: el, start: 'top 75%', end: 'top 25%', scrub: 2 },
+          immediateRender: false
+        }
+      )
+      triggers.push(t1, t2, t3, t4)
       prevId = id
     })
 
@@ -271,6 +302,47 @@ export default function App() {
       {/* Custom cursor — desktop only */}
       {!isMobile && <CustomCursor />}
 
+      {/* Temporary Debug Panel */}
+      <div style={{ position: 'fixed', top: 20, right: 20, zIndex: 9999, color: 'lime', fontFamily: 'VT323, monospace', background: 'rgba(0,0,0,0.85)', padding: '15px', borderRadius: '5px', width: '310px', border: '1px solid lime', userSelect: 'none' }}>
+        <h3 style={{ margin: '0 0 10px 0', borderBottom: '1px solid lime', textTransform: 'uppercase', fontSize: '1.2rem' }}>Pos: {activeSection}</h3>
+
+        {['x', 'y', 'z'].map(axis => (
+          <div key={axis} style={{ marginBottom: '5px', display: 'flex', alignItems: 'center' }}>
+            <label style={{ display: 'inline-block', width: '30px' }}>P_{axis.toUpperCase()}</label>
+            <input type="range" min="-3" max="5" step="0.01" value={debugCam[axis]} onChange={(e) => setDebugCam({ ...debugCam, [axis]: parseFloat(e.target.value) })} style={{ width: '150px' }} />
+            <span style={{ marginLeft: '10px', width: '40px', textAlign: 'right' }}>{debugCam[axis].toFixed(2)}</span>
+          </div>
+        ))}
+
+        <div style={{ height: '5px' }} />
+
+        {['tx', 'ty', 'tz'].map(axis => (
+          <div key={axis} style={{ marginBottom: '5px', display: 'flex', alignItems: 'center' }}>
+            <label style={{ display: 'inline-block', width: '30px' }}>T_{axis.replace('t', '').toUpperCase()}</label>
+            <input type="range" min="-3" max="3" step="0.01" value={debugCam[axis]} onChange={(e) => setDebugCam({ ...debugCam, [axis]: parseFloat(e.target.value) })} style={{ width: '150px' }} />
+            <span style={{ marginLeft: '10px', width: '40px', textAlign: 'right' }}>{debugCam[axis].toFixed(2)}</span>
+          </div>
+        ))}
+
+        <div style={{ height: '5px', borderBottom: '1px solid lime', marginBottom: '10px' }} />
+
+        {['hx', 'hy', 'hz', 'hs'].map(axis => (
+          <div key={axis} style={{ marginBottom: '5px', display: 'flex', alignItems: 'center' }}>
+            <label style={{ display: 'inline-block', width: '30px' }}>H_{axis.replace('h', '').toUpperCase()}</label>
+            <input type="range" min={axis === 'hs' ? 0.05 : -1} max={axis === 'hs' ? 1 : 1} step="0.01" value={debugHtml[axis]} onChange={(e) => setDebugHtml({ ...debugHtml, [axis]: parseFloat(e.target.value) })} style={{ width: '150px' }} />
+            <span style={{ marginLeft: '10px', width: '40px', textAlign: 'right' }}>{debugHtml[axis].toFixed(2)}</span>
+          </div>
+        ))}
+
+        <div style={{ marginTop: '15px', display: 'flex', justifyContent: 'space-between' }}>
+          <button onClick={() => setSavedPresets({ ...savedPresets, [activeSection]: { pos: [debugCam.x, debugCam.y, debugCam.z], tgt: [debugCam.tx, debugCam.ty, debugCam.tz], html: { pos: [debugHtml.hx, debugHtml.hy, debugHtml.hz], scale: debugHtml.hs } } })} style={{ background: 'green', color: 'black', padding: '5px 15px', border: 'none', cursor: 'pointer', fontFamily: 'VT323, monospace', fontSize: '1.1rem' }}>Save</button>
+          <button onClick={() => navigator.clipboard.writeText(JSON.stringify(savedPresets, null, 2)).then(() => alert('Copied to clipboard!'))} style={{ background: 'lime', color: 'black', padding: '5px 15px', border: 'none', cursor: 'pointer', fontFamily: 'VT323, monospace', fontSize: '1.1rem' }}>Export</button>
+        </div>
+        <div style={{ marginTop: '10px', fontSize: '0.9rem', color: 'green', wordWrap: 'break-word' }}>
+          Saved: {Object.keys(savedPresets).join(', ') || 'none'}
+        </div>
+      </div>
+
       {/* Audio toggle */}
       <AudioToggle />
 
@@ -281,6 +353,7 @@ export default function App() {
       <div id="canvas-container" aria-hidden="true">
         <Scene
           cameraState={cameraState.current}
+          htmlState={htmlState.current}
           activeSection={activeSection}
           isMobile={isMobile}
         />
