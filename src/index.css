@@ -1,0 +1,346 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─── Root & Global ─────────────────────────────────────── */
+:root {
+  --crt-green: #33ff33;
+  --crt-amber: #ffb000;
+  --bg-dark: #0a0a0a;
+  --bg-surface: #1a1a1a;
+  --glow-radius: 8px;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: auto; /* Lenis handles smooth scroll */
+  background-color: var(--bg-dark);
+}
+
+body {
+  background-color: var(--bg-dark);
+  color: var(--crt-green);
+  font-family: 'Inter', system-ui, sans-serif;
+  overflow-x: hidden;
+  /* Film grain overlay */
+  position: relative;
+}
+
+/* ─── Custom Pixelated Cursor ───────────────────────────── */
+*, *::before, *::after {
+  cursor: none !important;
+}
+
+/* ─── Film Grain Overlay ────────────────────────────────── */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 128px 128px;
+  opacity: 0.035;
+  animation: grain 0.5s steps(1) infinite;
+}
+
+@keyframes grain {
+  0%   { background-position: 0 0; }
+  10%  { background-position: -5% -10%; }
+  20%  { background-position: -15% 5%; }
+  30%  { background-position: 7% -25%; }
+  40%  { background-position: -5% 25%; }
+  50%  { background-position: -15% 10%; }
+  60%  { background-position: 15% 0%; }
+  70%  { background-position: 0% 15%; }
+  80%  { background-position: 3% 35%; }
+  90%  { background-position: -10% 10%; }
+  100% { background-position: 0 0; }
+}
+
+/* ─── Canvas / 3D Scene ─────────────────────────────────── */
+#canvas-container {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+}
+
+/* ─── Scroll Sections ───────────────────────────────────── */
+#scroll-wrapper {
+  position: relative;
+  z-index: 1;
+}
+
+.section-spacer {
+  height: 100vh;
+  pointer-events: none;
+}
+
+/* ─── CRT Screen Overlay (on Html component) ────────────── */
+.crt-screen {
+  font-family: 'VT323', monospace;
+  color: var(--crt-green);
+  background: #000;
+  position: relative;
+  overflow: hidden;
+  border-radius: 4px;
+  padding: 12px 16px;
+}
+
+.crt-screen::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.15) 2px,
+    rgba(0, 0, 0, 0.15) 4px
+  );
+  pointer-events: none;
+  z-index: 10;
+}
+
+/* Moving scanline */
+.crt-screen::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 40px;
+  background: linear-gradient(
+    transparent 0%,
+    rgba(51, 255, 51, 0.06) 50%,
+    transparent 100%
+  );
+  animation: scanline 6s linear infinite;
+  pointer-events: none;
+  z-index: 11;
+}
+
+@keyframes scanline {
+  0%   { top: -40px; }
+  100% { top: 100%; }
+}
+
+/* ─── Terminal Text ─────────────────────────────────────── */
+.terminal-line {
+  font-family: 'VT323', monospace;
+  font-size: 1.1rem;
+  line-height: 1.4;
+  color: var(--crt-green);
+  white-space: pre-wrap;
+  text-shadow: 0 0 6px rgba(51, 255, 51, 0.8);
+}
+
+.terminal-line.amber {
+  color: var(--crt-amber);
+  text-shadow: 0 0 6px rgba(255, 176, 0, 0.8);
+}
+
+.cursor-blink {
+  display: inline-block;
+  width: 0.6em;
+  height: 1.1em;
+  background: var(--crt-green);
+  vertical-align: text-bottom;
+  animation: blink 1s step-end infinite;
+  margin-left: 2px;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0; }
+}
+
+/* ─── DOS Window Chrome ─────────────────────────────────── */
+.dos-window {
+  border: 2px solid var(--crt-green);
+  background: #000a00;
+  font-family: 'VT323', monospace;
+  color: var(--crt-green);
+  box-shadow: 0 0 20px rgba(51, 255, 51, 0.2), inset 0 0 10px rgba(0,0,0,0.5);
+}
+
+.dos-titlebar {
+  background: var(--crt-green);
+  color: #000;
+  padding: 2px 8px;
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: 'VT323', monospace;
+}
+
+.dos-content {
+  padding: 10px 12px;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+/* ─── Retro Progress Bar ────────────────────────────────── */
+.retro-progress {
+  font-family: 'VT323', monospace;
+  font-size: 1rem;
+  color: var(--crt-green);
+  margin-bottom: 8px;
+}
+
+.retro-progress .bar-track {
+  color: rgba(51, 255, 51, 0.3);
+}
+
+.retro-progress .bar-fill {
+  color: var(--crt-green);
+}
+
+/* ─── Retro Form Inputs ─────────────────────────────────── */
+.retro-input {
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--crt-green);
+  color: var(--crt-green);
+  font-family: 'VT323', monospace;
+  font-size: 1.1rem;
+  outline: none;
+  width: 100%;
+  padding: 4px 0;
+  caret-color: var(--crt-green);
+}
+
+.retro-input::placeholder {
+  color: rgba(51, 255, 51, 0.4);
+}
+
+.retro-input:focus {
+  border-bottom-color: var(--crt-amber);
+  text-shadow: 0 0 4px rgba(51, 255, 51, 0.6);
+}
+
+/* ─── Retro Button ──────────────────────────────────────── */
+.retro-btn {
+  background: var(--crt-green);
+  color: #000;
+  font-family: 'VT323', monospace;
+  font-size: 1rem;
+  padding: 6px 20px;
+  border: none;
+  cursor: pointer;
+  transition: background 0.1s, box-shadow 0.1s;
+  letter-spacing: 0.05em;
+}
+
+.retro-btn:hover {
+  background: var(--crt-amber);
+  box-shadow: 0 0 12px rgba(255, 176, 0, 0.6);
+}
+
+/* ─── Project Modal ─────────────────────────────────────── */
+.retro-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.retro-modal {
+  width: min(520px, 90vw);
+  border: 2px solid var(--crt-green);
+  background: #000d00;
+  font-family: 'VT323', monospace;
+  box-shadow: 0 0 40px rgba(51, 255, 51, 0.3);
+  animation: modal-pop 0.15s ease-out;
+}
+
+@keyframes modal-pop {
+  from { transform: scale(0.92); opacity: 0; }
+  to   { transform: scale(1);    opacity: 1; }
+}
+
+/* ─── Audio Toggle (Power Button) ──────────────────────── */
+.power-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 2px solid var(--crt-green);
+  background: transparent;
+  color: var(--crt-green);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 14px;
+  position: fixed;
+  top: 1.25rem;
+  right: 1.25rem;
+  z-index: 9000;
+}
+
+.power-btn.active {
+  background: var(--crt-green);
+  color: #000;
+  box-shadow: 0 0 12px rgba(51, 255, 51, 0.7);
+}
+
+/* ─── Loading Screen ────────────────────────────────────── */
+.loading-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: #000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-family: 'VT323', monospace;
+  color: var(--crt-green);
+}
+
+.loading-bar-track {
+  width: 300px;
+  height: 20px;
+  border: 2px solid var(--crt-green);
+  margin-top: 16px;
+  position: relative;
+  overflow: hidden;
+}
+
+.loading-bar-fill {
+  height: 100%;
+  background: var(--crt-green);
+  box-shadow: 0 0 8px var(--crt-green);
+  transition: width 0.1s linear;
+}
+
+/* ─── Scrollbar ─────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #000; }
+::-webkit-scrollbar-thumb { background: var(--crt-green); border-radius: 0; }
+
+/* ─── Glow Text Utility ─────────────────────────────────── */
+.glow-green { text-shadow: 0 0 10px rgba(51, 255, 51, 0.9); }
+.glow-amber { text-shadow: 0 0 10px rgba(255, 176, 0, 0.9); }
+
+/* ─── Mobile Override ───────────────────────────────────── */
+@media (max-width: 768px) {
+  #canvas-container {
+    height: 60vh;
+    position: relative;
+  }
+  #scroll-wrapper {
+    position: static;
+  }
+}
