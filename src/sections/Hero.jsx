@@ -13,7 +13,7 @@ const BOOT_LINES = [
   { text: '[OK] Network stack', delay: 4.3,     color: 'green' },
   { text: '', delay: 4.7,                       color: 'green' },
   { text: '> WELCOME, HUMAN.', delay: 5.0,      color: 'amber' },
-  { text: '> I AM [YOUR NAME] — DEVELOPER', delay: 5.8, color: 'amber' },
+  { text: '> I AM MAYANK TIWARI — DEVELOPER', delay: 5.8, color: 'amber' },
   { text: '> SCROLL TO EXPLORE ↓', delay: 6.6, color: 'green' },
 ]
 

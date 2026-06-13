@@ -75,11 +75,16 @@ body::before {
 #scroll-wrapper {
   position: relative;
   z-index: 1;
+  pointer-events: none;
 }
 
 .section-spacer {
   height: 100vh;
   pointer-events: none;
+}
+
+.section-spacer > div {
+  pointer-events: auto;
 }
 
 /* ─── CRT Screen Overlay (on Html component) ────────────── */

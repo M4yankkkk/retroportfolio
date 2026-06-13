@@ -19,7 +19,7 @@ export default function Contact() {
     e.preventDefault()
     if (!form.name || !form.email || !form.message) return
     setSending(true)
-    setLines(prev => [...prev, `> SENDING to [YOUR_EMAIL]...`, '> Encoding message...'])
+    setLines(prev => [...prev, `> SENDING to tiwarimayank485@gmail.com...`, '> Encoding message...'])
 
     // Simulate async send (replace with your actual form endpoint)
     await new Promise(r => setTimeout(r, 1800))

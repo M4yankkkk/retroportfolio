@@ -14,21 +14,21 @@ export default function About() {
           ┌─ WHO AM I ─────────────────────┐
         </div>
         <div className="terminal-line" style={{ marginBottom: 6 }}>
-          Hi. I'm [YOUR NAME].
+          Hi. I'm Mayank Tiwari.
         </div>
         <div className="terminal-line" style={{ marginBottom: 6, color: 'rgba(51,255,51,0.75)' }}>
           A full-stack developer who loves<br/>
           building things people actually use.
         </div>
         <div className="terminal-line" style={{ marginBottom: 6 }}>
-          Based in [CITY], [COUNTRY].
+          Based in Surathkal, India.
         </div>
         <div className="terminal-line amber" style={{ marginTop: 10, marginBottom: 6 }}>
           ┌─ EXPERIENCE ───────────────────┐
         </div>
         <div className="terminal-line" style={{ color: 'rgba(51,255,51,0.75)' }}>
-          3+ yrs React / Node / TypeScript<br/>
-          Shipped products used by 10k+ users
+          Web Developer @ IRIS, NITK<br/>
+          Building tools for 6,000+ users
         </div>
         <div className="terminal-line" style={{ marginTop: 10, color: 'rgba(51,255,51,0.5)' }}>
           └──────────────────────────────────┘

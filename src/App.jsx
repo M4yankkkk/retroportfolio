@@ -133,7 +133,10 @@ function RetroNav({ activeSection }) {
 // ─── Main App ────────────────────────────────────────────────────────────────
 const CAMERA_PRESETS = {
   hero: { pos: [-0.55, -0.06, 1.28], tgt: [0.27, -0.31, -0.28], html: { pos: [0.06, 0.42, 0.35], scale: 0.30 } },
-  about: { pos: [0.08, -0.06, 1.56], tgt: [0.08, -0.31, -0.32], html: { pos: [0.06, 0.42, 0.35], scale: 0.30 } },
+  // about: { pos: [0.08, -0.06, 1.56], tgt: [0.08, -0.31, -0.32], html: { pos: [0.06, 0.42, 0.35], scale: 0.30 } },
+  about: { pos: [0.08, 0.15, 1.16], tgt: [0.03, -0.31, -0.32], html: { pos: [0.06, 0.42, 0.35], scale: 0.30 } },
+  // projects: { pos: [0.44, 0.25, 0.97], tgt: [-0.45, -0.42, -0.04], html: { pos: [0.06, 0.42, 0.35], scale: 0.30 } },
+
   projects: { pos: [0.38, 0.28, 1.07], tgt: [-0.24, -0.42, -0.04], html: { pos: [0.06, 0.42, 0.35], scale: 0.30 } },
   skills: { pos: [-0.38, 0.29, 1.13], tgt: [0.3, -0.33, -0.04], html: { pos: [0.06, 0.42, 0.35], scale: 0.30 } },
   contact: { pos: [-0.04, 0.23, 1.41], tgt: [0.14, -0.38, -0.35], html: { pos: [0.06, 0.40, 0.31], scale: 0.30 } },
@@ -148,6 +151,7 @@ export default function App() {
   const [debugCam, setDebugCam] = useState({ x: 0.3, y: 0.9, z: 2.2, tx: 0, ty: 0.42, tz: 0 })
   const [debugHtml, setDebugHtml] = useState({ hx: 0.06, hy: 0.42, hz: 0.41, hs: 0.30 })
   const [savedPresets, setSavedPresets] = useState({})
+  const [showSliders, setShowSliders] = useState(true)
 
   // Camera state — mutable refs so R3F can read each frame without re-renders
   const cameraState = useRef({
@@ -303,45 +307,59 @@ export default function App() {
       {!isMobile && <CustomCursor />}
 
       {/* Temporary Debug Panel */}
-      <div style={{ position: 'fixed', top: 20, right: 20, zIndex: 9999, color: 'lime', fontFamily: 'VT323, monospace', background: 'rgba(0,0,0,0.85)', padding: '15px', borderRadius: '5px', width: '310px', border: '1px solid lime', userSelect: 'none' }}>
-        <h3 style={{ margin: '0 0 10px 0', borderBottom: '1px solid lime', textTransform: 'uppercase', fontSize: '1.2rem' }}>Pos: {activeSection}</h3>
-
-        {['x', 'y', 'z'].map(axis => (
-          <div key={axis} style={{ marginBottom: '5px', display: 'flex', alignItems: 'center' }}>
-            <label style={{ display: 'inline-block', width: '30px' }}>P_{axis.toUpperCase()}</label>
-            <input type="range" min="-3" max="5" step="0.01" value={debugCam[axis]} onChange={(e) => setDebugCam({ ...debugCam, [axis]: parseFloat(e.target.value) })} style={{ width: '150px' }} />
-            <span style={{ marginLeft: '10px', width: '40px', textAlign: 'right' }}>{debugCam[axis].toFixed(2)}</span>
+      {import.meta.env.DEV && (
+        <div style={{ position: 'fixed', top: 20, right: 20, zIndex: 9999, color: 'lime', fontFamily: 'VT323, monospace', background: 'rgba(0,0,0,0.85)', padding: '15px', borderRadius: '5px', width: showSliders ? '310px' : 'auto', border: '1px solid lime', userSelect: 'none' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: showSliders ? '10px' : '0' }}>
+            {showSliders && <h3 style={{ margin: 0, borderBottom: '1px solid lime', textTransform: 'uppercase', fontSize: '1.2rem', width: '100%' }}>Pos: {activeSection}</h3>}
+            <button
+              onClick={() => setShowSliders(!showSliders)}
+              style={{ background: 'lime', color: 'black', padding: '2px 8px', border: 'none', cursor: 'pointer', fontFamily: 'VT323, monospace', fontSize: '1rem', marginLeft: showSliders ? '10px' : '0' }}
+            >
+              {showSliders ? 'Hide' : 'Debug'}
+            </button>
           </div>
-        ))}
 
-        <div style={{ height: '5px' }} />
+          {showSliders && (
+            <>
+              {['x', 'y', 'z'].map(axis => (
+                <div key={axis} style={{ marginBottom: '5px', display: 'flex', alignItems: 'center' }}>
+                  <label style={{ display: 'inline-block', width: '30px' }}>P_{axis.toUpperCase()}</label>
+                  <input type="range" min="-3" max="5" step="0.01" value={debugCam[axis]} onChange={(e) => setDebugCam({ ...debugCam, [axis]: parseFloat(e.target.value) })} style={{ width: '150px' }} />
+                  <span style={{ marginLeft: '10px', width: '40px', textAlign: 'right' }}>{debugCam[axis].toFixed(2)}</span>
+                </div>
+              ))}
 
-        {['tx', 'ty', 'tz'].map(axis => (
-          <div key={axis} style={{ marginBottom: '5px', display: 'flex', alignItems: 'center' }}>
-            <label style={{ display: 'inline-block', width: '30px' }}>T_{axis.replace('t', '').toUpperCase()}</label>
-            <input type="range" min="-3" max="3" step="0.01" value={debugCam[axis]} onChange={(e) => setDebugCam({ ...debugCam, [axis]: parseFloat(e.target.value) })} style={{ width: '150px' }} />
-            <span style={{ marginLeft: '10px', width: '40px', textAlign: 'right' }}>{debugCam[axis].toFixed(2)}</span>
-          </div>
-        ))}
+              <div style={{ height: '5px' }} />
 
-        <div style={{ height: '5px', borderBottom: '1px solid lime', marginBottom: '10px' }} />
+              {['tx', 'ty', 'tz'].map(axis => (
+                <div key={axis} style={{ marginBottom: '5px', display: 'flex', alignItems: 'center' }}>
+                  <label style={{ display: 'inline-block', width: '30px' }}>T_{axis.replace('t', '').toUpperCase()}</label>
+                  <input type="range" min="-3" max="3" step="0.01" value={debugCam[axis]} onChange={(e) => setDebugCam({ ...debugCam, [axis]: parseFloat(e.target.value) })} style={{ width: '150px' }} />
+                  <span style={{ marginLeft: '10px', width: '40px', textAlign: 'right' }}>{debugCam[axis].toFixed(2)}</span>
+                </div>
+              ))}
 
-        {['hx', 'hy', 'hz', 'hs'].map(axis => (
-          <div key={axis} style={{ marginBottom: '5px', display: 'flex', alignItems: 'center' }}>
-            <label style={{ display: 'inline-block', width: '30px' }}>H_{axis.replace('h', '').toUpperCase()}</label>
-            <input type="range" min={axis === 'hs' ? 0.05 : -1} max={axis === 'hs' ? 1 : 1} step="0.01" value={debugHtml[axis]} onChange={(e) => setDebugHtml({ ...debugHtml, [axis]: parseFloat(e.target.value) })} style={{ width: '150px' }} />
-            <span style={{ marginLeft: '10px', width: '40px', textAlign: 'right' }}>{debugHtml[axis].toFixed(2)}</span>
-          </div>
-        ))}
+              <div style={{ height: '5px', borderBottom: '1px solid lime', marginBottom: '10px' }} />
 
-        <div style={{ marginTop: '15px', display: 'flex', justifyContent: 'space-between' }}>
-          <button onClick={() => setSavedPresets({ ...savedPresets, [activeSection]: { pos: [debugCam.x, debugCam.y, debugCam.z], tgt: [debugCam.tx, debugCam.ty, debugCam.tz], html: { pos: [debugHtml.hx, debugHtml.hy, debugHtml.hz], scale: debugHtml.hs } } })} style={{ background: 'green', color: 'black', padding: '5px 15px', border: 'none', cursor: 'pointer', fontFamily: 'VT323, monospace', fontSize: '1.1rem' }}>Save</button>
-          <button onClick={() => navigator.clipboard.writeText(JSON.stringify(savedPresets, null, 2)).then(() => alert('Copied to clipboard!'))} style={{ background: 'lime', color: 'black', padding: '5px 15px', border: 'none', cursor: 'pointer', fontFamily: 'VT323, monospace', fontSize: '1.1rem' }}>Export</button>
+              {['hx', 'hy', 'hz', 'hs'].map(axis => (
+                <div key={axis} style={{ marginBottom: '5px', display: 'flex', alignItems: 'center' }}>
+                  <label style={{ display: 'inline-block', width: '30px' }}>H_{axis.replace('h', '').toUpperCase()}</label>
+                  <input type="range" min={axis === 'hs' ? 0.05 : -1} max={axis === 'hs' ? 1 : 1} step="0.01" value={debugHtml[axis]} onChange={(e) => setDebugHtml({ ...debugHtml, [axis]: parseFloat(e.target.value) })} style={{ width: '150px' }} />
+                  <span style={{ marginLeft: '10px', width: '40px', textAlign: 'right' }}>{debugHtml[axis].toFixed(2)}</span>
+                </div>
+              ))}
+
+              <div style={{ marginTop: '15px', display: 'flex', justifyContent: 'space-between' }}>
+                <button onClick={() => setSavedPresets({ ...savedPresets, [activeSection]: { pos: [debugCam.x, debugCam.y, debugCam.z], tgt: [debugCam.tx, debugCam.ty, debugCam.tz], html: { pos: [debugHtml.hx, debugHtml.hy, debugHtml.hz], scale: debugHtml.hs } } })} style={{ background: 'green', color: 'black', padding: '5px 15px', border: 'none', cursor: 'pointer', fontFamily: 'VT323, monospace', fontSize: '1.1rem' }}>Save</button>
+                <button onClick={() => navigator.clipboard.writeText(JSON.stringify(savedPresets, null, 2)).then(() => alert('Copied to clipboard!'))} style={{ background: 'lime', color: 'black', padding: '5px 15px', border: 'none', cursor: 'pointer', fontFamily: 'VT323, monospace', fontSize: '1.1rem' }}>Export</button>
+              </div>
+              <div style={{ marginTop: '10px', fontSize: '0.9rem', color: 'green', wordWrap: 'break-word' }}>
+                Saved: {Object.keys(savedPresets).join(', ') || 'none'}
+              </div>
+            </>
+          )}
         </div>
-        <div style={{ marginTop: '10px', fontSize: '0.9rem', color: 'green', wordWrap: 'break-word' }}>
-          Saved: {Object.keys(savedPresets).join(', ') || 'none'}
-        </div>
-      </div>
+      )}
 
       {/* Audio toggle */}
       <AudioToggle />
@@ -371,7 +389,7 @@ export default function App() {
           {isMobile && (
             <div style={{ padding: '2rem', fontFamily: 'VT323, monospace', color: '#33ff33' }}>
               <div style={{ fontSize: '2rem', textShadow: '0 0 10px #33ff33' }}>
-                [ YOUR NAME ]
+                MAYANK TIWARI
               </div>
               <div style={{ fontSize: '1.1rem', opacity: 0.7, marginTop: 8 }}>
                 Developer · Builder · Human
@@ -392,9 +410,9 @@ export default function App() {
             <div className="dos-window" style={{ maxWidth: 480 }}>
               <div className="dos-titlebar"><span>■ ABOUT.EXE</span></div>
               <div className="dos-content">
-                <div className="terminal-line">Hi, I'm [YOUR NAME].</div>
+                <div className="terminal-line">Hi, I'm Mayank Tiwari.</div>
                 <div className="terminal-line" style={{ opacity: 0.75, marginTop: 8 }}>
-                  Full-stack developer. I build things people use.
+                  Web Developer @ IRIS, NITK. I build things people use.
                 </div>
               </div>
             </div>
@@ -409,7 +427,7 @@ export default function App() {
           {isMobile && (
             <div style={{ fontFamily: 'VT323, monospace', color: '#33ff33' }}>
               <div style={{ fontSize: '1.5rem', marginBottom: 16 }}>C:\PROJECTS\</div>
-              {['Project One', 'Project Two', 'Project Three'].map(p => (
+              {['SkillSwap', 'Coastal Monitor', 'Orion Orchestrator'].map(p => (
                 <div key={p} style={{ padding: '6px 0', borderBottom: '1px solid rgba(51,255,51,0.2)', fontSize: '1.1rem' }}>
                   📄 {p.toUpperCase().replace(' ', '_')}.EXE
                 </div>
@@ -426,7 +444,7 @@ export default function App() {
           {isMobile && (
             <div style={{ fontFamily: 'VT323, monospace', color: '#33ff33' }}>
               <div style={{ fontSize: '1.5rem', marginBottom: 16 }}>SKILLS.SYS</div>
-              {['JavaScript 92%', 'React 90%', 'Node 82%', 'TypeScript 88%'].map(s => (
+              {['JavaScript 90%', 'Python 85%', 'C++ 80%', 'GoLang 75%'].map(s => (
                 <div key={s} style={{ marginBottom: 8, fontSize: '1.1rem' }}>{s}</div>
               ))}
             </div>
@@ -443,10 +461,10 @@ export default function App() {
               <div style={{ fontSize: '1.5rem', marginBottom: 16 }}>MAIL.EXE</div>
               <div style={{ opacity: 0.7, marginBottom: 16 }}>
                 Drop me a message at:<br />
-                <span style={{ color: '#ffb000' }}>hello@yourdomain.com</span>
+                <span style={{ color: '#ffb000' }}>tiwarimayank485@gmail.com</span>
               </div>
               <a
-                href="mailto:hello@yourdomain.com"
+                href="mailto:tiwarimayank485@gmail.com"
                 className="retro-btn"
                 style={{ display: 'inline-block', textDecoration: 'none' }}
               >
@@ -465,10 +483,11 @@ export default function App() {
           fontSize: '0.85rem',
           borderTop: '1px solid rgba(51,255,51,0.1)',
           background: '#050505',
+          pointerEvents: 'auto',
         }}>
           <div>PORTFOLIO.EXE v1.0 · Built with React + Three.js</div>
           <div style={{ marginTop: 6 }}>
-            © {new Date().getFullYear()} [YOUR NAME] · All rights reserved.
+            © {new Date().getFullYear()} Mayank Tiwari · All rights reserved.
           </div>
           <div style={{ marginTop: 6, opacity: 0.5 }}>
             C:\&gt; <span className="cursor-blink" />

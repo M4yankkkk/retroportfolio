@@ -5,14 +5,14 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger'
 gsap.registerPlugin(ScrollTrigger)
 
 const SKILLS = [
-  { name: 'JAVASCRIPT.SYS',   pct: 92, color: '#33ff33' },
-  { name: 'TYPESCRIPT.SYS',   pct: 88, color: '#33ff33' },
-  { name: 'REACT.EXE',        pct: 90, color: '#33ff33' },
-  { name: 'NODE.EXE',         pct: 82, color: '#33ff33' },
-  { name: 'THREE_JS.DLL',     pct: 75, color: '#ffb000' },
-  { name: 'POSTGRES.DB',      pct: 78, color: '#33ff33' },
+  { name: 'JAVASCRIPT.SYS',   pct: 90, color: '#33ff33' },
+  { name: 'PYTHON.EXE',       pct: 85, color: '#33ff33' },
+  { name: 'C++.DLL',          pct: 80, color: '#ffb000' },
+  { name: 'GOLANG.SYS',       pct: 75, color: '#ffb000' },
+  { name: 'REACT.EXE',        pct: 85, color: '#33ff33' },
+  { name: 'NODE_JS.EXE',      pct: 80, color: '#33ff33' },
+  { name: 'MONGODB.DB',       pct: 75, color: '#ffb000' },
   { name: 'DOCKER.SYS',       pct: 70, color: '#ffb000' },
-  { name: 'DESIGN_UI.EXE',    pct: 80, color: '#33ff33' },
 ]
 
 const BAR_TOTAL = 12
