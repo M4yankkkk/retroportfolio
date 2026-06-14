@@ -190,35 +190,150 @@ function StarField() {
 }
 
 /**
- * Desk geometry — floating in deep space.
+ * SpaceStationPlatform — hexagonal metal grating panel floating in space.
+ * Procedural grid/grating texture, rivet bolts, safety edge strip, worn metal.
  */
-function Desk() {
+function makeGratingTexture() {
+  const size = 512
+  const canvas = document.createElement('canvas')
+  canvas.width = canvas.height = size
+  const ctx = canvas.getContext('2d')
+
+  // Dark gunmetal base
+  ctx.fillStyle = '#1c2228'
+  ctx.fillRect(0, 0, size, size)
+
+  // Grating grid lines
+  ctx.strokeStyle = '#2e3f4a'
+  ctx.lineWidth = 2
+  const cell = 32
+  for (let x = 0; x <= size; x += cell) {
+    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, size); ctx.stroke()
+  }
+  for (let y = 0; y <= size; y += cell) {
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(size, y); ctx.stroke()
+  }
+
+  // Diagonal crosshatch inside each cell (grating cutouts)
+  ctx.strokeStyle = '#141c21'
+  ctx.lineWidth = 1
+  for (let x = 0; x < size; x += cell) {
+    for (let y = 0; y < size; y += cell) {
+      ctx.beginPath(); ctx.moveTo(x + 4, y + 4); ctx.lineTo(x + cell - 4, y + cell - 4); ctx.stroke()
+      ctx.beginPath(); ctx.moveTo(x + cell - 4, y + 4); ctx.lineTo(x + 4, y + cell - 4); ctx.stroke()
+    }
+  }
+
+  // Rivets at grid intersections
+  ctx.fillStyle = '#3a4d5c'
+  for (let x = 0; x <= size; x += cell) {
+    for (let y = 0; y <= size; y += cell) {
+      ctx.beginPath()
+      ctx.arc(x, y, 3, 0, Math.PI * 2)
+      ctx.fill()
+    }
+  }
+
+  const tex = new THREE.CanvasTexture(canvas)
+  tex.wrapS = tex.wrapT = THREE.RepeatWrapping
+  tex.repeat.set(3, 3)
+  return tex
+}
+
+const gratingTex = makeGratingTexture()
+
+// Rivet positions on the platform (corner bolts)
+const RIVET_POSITIONS = [
+  [1.05, 0, 0.15], [-1.05, 0, 0.15],
+  [0.75, 0, 0.9],  [-0.75, 0, 0.9],
+  [0.75, 0, -0.6], [-0.75, 0, -0.6],
+  [1.05, 0, -0.25],[-1.05, 0, -0.25],
+]
+
+function SpaceStationPlatform() {
+  const groupRef = useRef()
+
+  useFrame(({ clock }) => {
+    if (!groupRef.current) return
+    // Very slight slow drift, like it’s drifting in microgravity
+    groupRef.current.position.y = Math.sin(clock.getElapsedTime() * 0.35) * 0.025
+    groupRef.current.rotation.y = Math.sin(clock.getElapsedTime() * 0.12) * 0.008
+  })
+
   return (
-    <group>
-      {/* Desk surface */}
-      <mesh receiveShadow position={[0, -0.52, 0.2]}>
-        <boxGeometry args={[4, 0.07, 2.2]} />
-        <meshStandardMaterial color={new THREE.Color(0x2a1a0e)} roughness={0.85} metalness={0.05} />
-      </mesh>
-      {/* Desk legs — shorter, fade into void */}
-      {[[-1.8, -1], [1.8, -1], [-1.8, 1], [1.8, 1]].map(([x, z], i) => (
-        <mesh key={i} castShadow position={[x, -1.0, z * 0.5]}>
-          <boxGeometry args={[0.06, 1.0, 0.06]} />
-          <meshStandardMaterial color={0x1a0e05} roughness={0.9} />
-        </mesh>
-      ))}
-      {/* Subtle green glow beneath desk — CRT ambient bounce */}
-      <pointLight position={[0, -0.7, 0.2]} intensity={0.4} color={0x003311} distance={2.5} decay={2} />
-      {/* Volumetric floor mist — a large dark semi-transparent plane below desk */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -1.58, 0]}>
-        <planeGeometry args={[12, 12]} />
+    <group ref={groupRef}>
+      {/* Main hexagonal grating slab */}
+      <mesh receiveShadow castShadow position={[0, -0.545, 0.15]}>
+        <cylinderGeometry args={[1.5, 1.5, 0.08, 6]} />
         <meshStandardMaterial
-          color={new THREE.Color(0x020408)}
-          roughness={1}
-          transparent
-          opacity={0.85}
+          map={gratingTex}
+          color={new THREE.Color(0x8aaabb)}
+          roughness={0.75}
+          metalness={0.85}
+          envMapIntensity={0.6}
         />
       </mesh>
+
+      {/* Underside — darker plating */}
+      <mesh position={[0, -0.59, 0.15]}>
+        <cylinderGeometry args={[1.5, 1.5, 0.01, 6]} />
+        <meshStandardMaterial
+          color={new THREE.Color(0x0e1418)}
+          roughness={0.9}
+          metalness={0.7}
+        />
+      </mesh>
+
+      {/* Safety edge strip — thin bright rim */}
+      <mesh position={[0, -0.54, 0.15]}>
+        <torusGeometry args={[1.49, 0.025, 8, 6]} />
+        <meshStandardMaterial
+          color={new THREE.Color(0xffcc00)}
+          emissive={new THREE.Color(0xffaa00)}
+          emissiveIntensity={0.9}
+          roughness={0.3}
+          metalness={0.6}
+        />
+      </mesh>
+
+      {/* Inner structural ring */}
+      <mesh position={[0, -0.54, 0.15]}>
+        <torusGeometry args={[1.1, 0.015, 6, 6]} />
+        <meshStandardMaterial
+          color={new THREE.Color(0x445566)}
+          roughness={0.5}
+          metalness={0.9}
+        />
+      </mesh>
+
+      {/* Rivet bolts */}
+      {RIVET_POSITIONS.map(([x, , z], i) => (
+        <mesh key={i} position={[x, -0.504, z]}>
+          <cylinderGeometry args={[0.03, 0.03, 0.02, 8]} />
+          <meshStandardMaterial
+            color={new THREE.Color(0x667788)}
+            roughness={0.4}
+            metalness={0.95}
+          />
+        </mesh>
+      ))}
+
+      {/* Structural support stanchion hanging below — fades into void */}
+      <mesh position={[0, -1.0, 0.15]}>
+        <cylinderGeometry args={[0.04, 0.08, 0.9, 8]} />
+        <meshStandardMaterial
+          color={new THREE.Color(0x1a2530)}
+          roughness={0.8}
+          metalness={0.7}
+          transparent
+          opacity={0.6}
+        />
+      </mesh>
+
+      {/* Warm industrial underglow — like maintenance lighting */}
+      <pointLight position={[0, -0.65, 0.15]} intensity={0.6} color={0xffbb44} distance={3.0} decay={2} />
+      {/* Cool fill from opposite side */}
+      <pointLight position={[0, -0.5, -0.8]} intensity={0.3} color={0x334455} distance={2.5} decay={2} />
     </group>
   )
 }
@@ -337,7 +452,7 @@ export default function Scene({ cameraState, htmlState, activeSection, isMobile,
 
       {/* ── 3D Objects ── */}
       <StarField />
-      <Desk />
+      <SpaceStationPlatform />
       <DustParticles />
 
       {/* PCjr model — streams in with Draco, fallback to box placeholder */}
