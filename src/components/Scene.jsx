@@ -192,33 +192,108 @@ function StarField() {
 /**
  * Desk geometry — floating in deep space.
  */
-function Desk() {
+/**
+ * EnergyPlatform — glowing holographic pedestal floating in space.
+ * Octagonal disc + pulsing rings + volumetric beam + bobbing animation.
+ */
+function PulsingRing({ delay = 0, radius = 1.2, speed = 1.6 }) {
+  const ref = useRef()
+  useFrame(({ clock }) => {
+    if (!ref.current) return
+    const t = (clock.getElapsedTime() * speed + delay) % 1
+    const scale = 0.4 + t * 1.4
+    ref.current.scale.set(scale, 1, scale)
+    ref.current.material.opacity = (1 - t) * 0.6
+  })
   return (
-    <group>
-      {/* Desk surface */}
-      <mesh receiveShadow position={[0, -0.52, 0.2]}>
-        <boxGeometry args={[4, 0.07, 2.2]} />
-        <meshStandardMaterial color={new THREE.Color(0x2a1a0e)} roughness={0.85} metalness={0.05} />
-      </mesh>
-      {/* Desk legs — shorter, fade into void */}
-      {[[-1.8, -1], [1.8, -1], [-1.8, 1], [1.8, 1]].map(([x, z], i) => (
-        <mesh key={i} castShadow position={[x, -1.0, z * 0.5]}>
-          <boxGeometry args={[0.06, 1.0, 0.06]} />
-          <meshStandardMaterial color={0x1a0e05} roughness={0.9} />
-        </mesh>
-      ))}
-      {/* Subtle green glow beneath desk — CRT ambient bounce */}
-      <pointLight position={[0, -0.7, 0.2]} intensity={0.4} color={0x003311} distance={2.5} decay={2} />
-      {/* Volumetric floor mist — a large dark semi-transparent plane below desk */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -1.58, 0]}>
-        <planeGeometry args={[12, 12]} />
+    <mesh ref={ref} rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.56, 0.15]}>
+      <ringGeometry args={[radius * 0.85, radius, 64]} />
+      <meshBasicMaterial color={0x33ff66} transparent opacity={0.5} depthWrite={false} side={THREE.DoubleSide} />
+    </mesh>
+  )
+}
+
+function EnergyPlatform() {
+  const groupRef = useRef()
+
+  useFrame(({ clock }) => {
+    if (!groupRef.current) return
+    // Gentle vertical bob
+    groupRef.current.position.y = Math.sin(clock.getElapsedTime() * 0.6) * 0.04
+  })
+
+  return (
+    <group ref={groupRef}>
+      {/* Main disc — thin octagonal platform */}
+      <mesh receiveShadow position={[0, -0.54, 0.15]}>
+        <cylinderGeometry args={[1.2, 1.35, 0.06, 8]} />
         <meshStandardMaterial
-          color={new THREE.Color(0x020408)}
-          roughness={1}
-          transparent
-          opacity={0.85}
+          color={new THREE.Color(0x0a1a0f)}
+          roughness={0.2}
+          metalness={0.8}
+          emissive={new THREE.Color(0x003311)}
+          emissiveIntensity={0.4}
         />
       </mesh>
+
+      {/* Glass top surface — semi-transparent */}
+      <mesh position={[0, -0.508, 0.15]}>
+        <cylinderGeometry args={[1.18, 1.18, 0.01, 8]} />
+        <meshStandardMaterial
+          color={new THREE.Color(0x44ffaa)}
+          roughness={0}
+          metalness={0.1}
+          transparent
+          opacity={0.12}
+          emissive={new THREE.Color(0x33ff66)}
+          emissiveIntensity={0.3}
+        />
+      </mesh>
+
+      {/* Glowing rim edge */}
+      <mesh position={[0, -0.535, 0.15]}>
+        <torusGeometry args={[1.27, 0.018, 12, 64]} />
+        <meshStandardMaterial
+          color={new THREE.Color(0x33ff66)}
+          emissive={new THREE.Color(0x33ff66)}
+          emissiveIntensity={3.5}
+          roughness={0.1}
+          metalness={0.5}
+        />
+      </mesh>
+
+      {/* Inner rim — secondary accent */}
+      <mesh position={[0, -0.535, 0.15]}>
+        <torusGeometry args={[0.9, 0.008, 8, 64]} />
+        <meshStandardMaterial
+          color={new THREE.Color(0x00ccff)}
+          emissive={new THREE.Color(0x00ccff)}
+          emissiveIntensity={2.0}
+          roughness={0.1}
+        />
+      </mesh>
+
+      {/* Pulsing rings — 3 offset in time for continuous wave effect */}
+      <PulsingRing delay={0}   speed={1.4} radius={1.0} />
+      <PulsingRing delay={0.33} speed={1.4} radius={1.0} />
+      <PulsingRing delay={0.66} speed={1.4} radius={1.0} />
+
+      {/* Volumetric beam cone downward — fades into void */}
+      <mesh position={[0, -1.2, 0.15]} rotation={[Math.PI, 0, 0]}>
+        <coneGeometry args={[0.5, 1.4, 16, 1, true]} />
+        <meshBasicMaterial
+          color={new THREE.Color(0x33ff66)}
+          transparent
+          opacity={0.06}
+          depthWrite={false}
+          side={THREE.DoubleSide}
+        />
+      </mesh>
+
+      {/* Platform underglow — strong green point light */}
+      <pointLight position={[0, -0.65, 0.15]} intensity={1.8} color={0x33ff66} distance={3.5} decay={2} />
+      {/* Subtle teal fill from below */}
+      <pointLight position={[0, -1.4, 0.15]} intensity={0.4} color={0x004466} distance={4.0} decay={2} />
     </group>
   )
 }
@@ -337,7 +412,7 @@ export default function Scene({ cameraState, htmlState, activeSection, isMobile,
 
       {/* ── 3D Objects ── */}
       <StarField />
-      <Desk />
+      <EnergyPlatform />
       <DustParticles />
 
       {/* PCjr model — streams in with Draco, fallback to box placeholder */}
