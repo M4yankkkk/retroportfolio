@@ -12,6 +12,8 @@ import About from '../sections/About'
 import Projects from '../sections/Projects'
 import Skills from '../sections/Skills'
 import Contact from '../sections/Contact'
+import SnakeGame from '../sections/SnakeGame'
+import Terminal from '../sections/Terminal'
 
 const SCREEN_SECTIONS = ['hero', 'about', 'projects', 'skills', 'contact']
 
@@ -177,7 +179,7 @@ function Desk() {
 /**
  * Screen content switcher — renders the right section overlay on the monitor.
  */
-function ScreenContent({ activeSection, onNavigate }) {
+function ScreenContent({ activeSection, onNavigate, onBack }) {
   const [displaySection, setDisplaySection] = useState(activeSection)
   const [isClearing, setIsClearing] = useState(false)
 
@@ -187,7 +189,7 @@ function ScreenContent({ activeSection, onNavigate }) {
       const timer = setTimeout(() => {
         setDisplaySection(activeSection)
         setIsClearing(false)
-      }, 300) // 300ms DOS clear effect
+      }, 300)
       return () => clearTimeout(timer)
     }
   }, [activeSection, displaySection])
@@ -204,13 +206,15 @@ function ScreenContent({ activeSection, onNavigate }) {
   }
 
   const map = {
-    hero: <Hero onNavigate={onNavigate} />,
-    about: <About onNavigate={onNavigate} />,
-    projects: <Projects onNavigate={onNavigate} />,
-    skills: <Skills onNavigate={onNavigate} />,
-    contact: <Contact onNavigate={onNavigate} />,
+    hero: <Hero onNavigate={onNavigate} onBack={onBack} />,
+    about: <About onNavigate={onNavigate} onBack={onBack} />,
+    projects: <Projects onNavigate={onNavigate} onBack={onBack} />,
+    skills: <Skills onNavigate={onNavigate} onBack={onBack} />,
+    contact: <Contact onNavigate={onNavigate} onBack={onBack} />,
+    snake: <SnakeGame onNavigate={onNavigate} onBack={onBack} />,
+    terminal: <Terminal onNavigate={onNavigate} onBack={onBack} />,
   }
-  return map[displaySection] || <Hero onNavigate={onNavigate} />
+  return map[displaySection] || <Hero onNavigate={onNavigate} onBack={onBack} />
 }
 
 
@@ -218,7 +222,7 @@ function ScreenContent({ activeSection, onNavigate }) {
 /**
  * The main R3F scene graph.
  */
-export default function Scene({ cameraState, htmlState, activeSection, isMobile, onNavigate }) {
+export default function Scene({ cameraState, htmlState, activeSection, isMobile, onNavigate, onBack }) {
   const mouseParallax = useRef({ x: 0, y: 0 })
   const r0 = useRef(), r1 = useRef(), r2 = useRef(), r3 = useRef(), r4 = useRef()
   const occludeRefs = [r0, r1, r2, r3, r4]
@@ -299,7 +303,7 @@ export default function Scene({ cameraState, htmlState, activeSection, isMobile,
               }}
             >
               <div style={{ width: 280, marginLeft: -140, marginTop: -70, backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' }}>
-                <ScreenContent activeSection={activeSection} onNavigate={onNavigate} />
+                <ScreenContent activeSection={activeSection} onNavigate={onNavigate} onBack={onBack} />
               </div>
             </Html>
           </HtmlRig>

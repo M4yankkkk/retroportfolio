@@ -4,52 +4,73 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger'
 
 gsap.registerPlugin(ScrollTrigger)
 
-const SKILLS = [
-  { name: 'JAVASCRIPT.SYS',   pct: 90, color: '#33ff33' },
-  { name: 'PYTHON.EXE',       pct: 85, color: '#33ff33' },
-  { name: 'C++.DLL',          pct: 80, color: '#ffb000' },
-  { name: 'GOLANG.SYS',       pct: 75, color: '#ffb000' },
-  { name: 'REACT.EXE',        pct: 85, color: '#33ff33' },
-  { name: 'NODE_JS.EXE',      pct: 80, color: '#33ff33' },
-  { name: 'MONGODB.DB',       pct: 75, color: '#ffb000' },
-  { name: 'DOCKER.SYS',       pct: 70, color: '#ffb000' },
+const DIRECTORIES = [
+  { 
+    id: 'frontend', 
+    name: 'FRONTEND', 
+    skills: [
+      { name: 'JavaScript', icon: 'https://cdn.simpleicons.org/javascript/33ff33', color: '#33ff33' },
+      { name: 'React',      icon: 'https://cdn.simpleicons.org/react/33ff33', color: '#33ff33' }
+    ] 
+  },
+  { 
+    id: 'backend', 
+    name: 'BACKEND', 
+    skills: [
+      { name: 'Python',     icon: 'https://cdn.simpleicons.org/python/33ff33', color: '#33ff33' },
+      { name: 'Node.js',    icon: 'https://cdn.simpleicons.org/nodedotjs/33ff33', color: '#33ff33' },
+      { name: 'Go',         icon: 'https://cdn.simpleicons.org/go/ffb000', color: '#ffb000' }
+    ] 
+  },
+  { 
+    id: 'tools', 
+    name: 'TOOLS', 
+    skills: [
+      { name: 'C++',        icon: 'https://cdn.simpleicons.org/cplusplus/ffb000', color: '#ffb000' },
+      { name: 'MongoDB',    icon: 'https://cdn.simpleicons.org/mongodb/ffb000', color: '#ffb000' },
+      { name: 'Docker',     icon: 'https://cdn.simpleicons.org/docker/ffb000', color: '#ffb000' }
+    ] 
+  }
 ]
 
 const BAR_TOTAL = 12
 
-function SkillBar({ skill, animate }) {
-  const [filled, setFilled] = useState(0)
-
-  useEffect(() => {
-    if (!animate) return
-    const target = Math.round((skill.pct / 100) * BAR_TOTAL)
-    let current = 0
-    const interval = setInterval(() => {
-      current++
-      setFilled(current)
-      if (current >= target) clearInterval(interval)
-    }, 40)
-    return () => clearInterval(interval)
-  }, [animate, skill.pct])
-
+function Skill({ skill }) {
   return (
-    <div className="retro-progress">
-      <div style={{ fontSize: '0.8rem', marginBottom: 1, color: skill.color }}>
-        {skill.name}
+    <div style={{ 
+      display: 'flex', 
+      flexDirection: 'column', 
+      alignItems: 'center', 
+      gap: '8px',
+      width: '70px',
+      padding: '8px',
+      cursor: 'pointer'
+    }}>
+      <div style={{ 
+        width: '40px', 
+        height: '40px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+      }}>
+        <img src={skill.icon} alt={skill.name} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
       </div>
-      <div style={{ fontSize: '0.85rem', letterSpacing: '0.05em', whiteSpace: 'nowrap' }}>
-        <span className="bar-fill" style={{ color: skill.color }}>{'█'.repeat(filled)}</span>
-        <span className="bar-track" style={{ color: 'rgba(51,255,51,0.2)' }}>{'░'.repeat(BAR_TOTAL - filled)}</span>
-        <span style={{ marginLeft: 6, color: 'rgba(51,255,51,0.7)', fontSize: '0.75rem' }}>
-          {skill.pct}%
-        </span>
+      <div style={{ 
+        fontSize: '0.85rem', 
+        color: skill.color, 
+        fontFamily: 'VT323, monospace',
+        textAlign: 'center',
+        lineHeight: '1'
+      }}>
+        {skill.name}
       </div>
     </div>
   )
 }
 
-export default function Skills({ onNavigate }) {
+export default function Skills({ onNavigate, onBack }) {
   const [animate, setAnimate] = useState(false)
+  const [activeDir, setActiveDir] = useState('frontend')
   const ref = useRef()
 
   useEffect(() => {
@@ -62,36 +83,69 @@ export default function Skills({ onNavigate }) {
   }, [])
 
   const handleClose = () => {
-    if (onNavigate) {
-      onNavigate('hero')
-    } else {
-      document.getElementById('section-hero')?.scrollIntoView({ behavior: 'smooth' })
-    }
+    if (onBack) onBack()
+    else if (onNavigate) onNavigate('hero')
+    else document.getElementById('section-hero')?.scrollIntoView({ behavior: 'smooth' })
   }
 
   return (
-    <div className="dos-window" ref={ref} style={{ width: '380px', fontSize: '0.85rem' }}>
+    <div className="dos-window" ref={ref} style={{ width: '420px', fontSize: '0.85rem' }}>
       <div className="dos-titlebar">
-        <span>■ SYSINFO.EXE — SKILLS</span>
+        <span>■ NC.EXE — SKILLS</span>
         <span>
           [ □ ] <span style={{ cursor: 'pointer' }} onClick={handleClose}>[ ✕ ]</span>
         </span>
       </div>
-      <div className="dos-content" style={{ padding: '10px 12px' }}>
-        <div className="terminal-line amber" style={{ marginBottom: 8, fontSize: '0.8rem' }}>
-          C:\&gt; sysinfo /skills /verbose
-        </div>
+      <div className="dos-content" style={{ padding: '0', display: 'flex', flexDirection: 'row', height: '260px' }}>
         
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', columnGap: '16px', rowGap: '8px' }}>
-          {SKILLS.map((skill) => (
-            <SkillBar key={skill.name} skill={skill} animate={animate} />
+        {/* LEFT PANE - DIRECTORIES */}
+        <div style={{ flex: '0 0 140px', borderRight: '2px solid var(--crt-green)', padding: '10px 8px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <div style={{ color: '#33ff33', marginBottom: '8px', borderBottom: '1px solid #33ff33', paddingBottom: '4px' }}>
+            C:\SKILLS&gt;
+          </div>
+          {DIRECTORIES.map(dir => (
+            <div 
+              key={dir.id} 
+              onClick={() => setActiveDir(dir.id)}
+              onMouseEnter={(e) => {
+                if(activeDir !== dir.id) { e.currentTarget.style.background = '#33ff33'; e.currentTarget.style.color = '#000'; }
+              }}
+              onMouseLeave={(e) => {
+                if(activeDir !== dir.id) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#33ff33'; }
+              }}
+              style={{ 
+                cursor: 'pointer', 
+                padding: '4px 6px',
+                background: activeDir === dir.id ? '#33ff33' : 'transparent',
+                color: activeDir === dir.id ? '#000' : '#33ff33',
+                fontSize: '0.9rem',
+                fontFamily: 'VT323, monospace',
+                transition: 'background 0.1s, color 0.1s'
+              }}
+            >
+              &lt;DIR&gt; {dir.name}
+            </div>
           ))}
         </div>
 
-        <div style={{ marginTop: 10 }}>
-          <span className="terminal-line" style={{ opacity: 0.5 }}>C:\&gt; </span>
-          <span className="cursor-blink" />
+        {/* RIGHT PANE - SKILLS */}
+        <div style={{ flex: 1, padding: '10px 15px', display: 'flex', flexDirection: 'column' }}>
+          <div className="terminal-line amber" style={{ marginBottom: 12, fontSize: '0.8rem' }}>
+            DIR C:\SKILLS\{DIRECTORIES.find(d => d.id === activeDir).name}
+          </div>
+          
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', alignContent: 'flex-start', flex: 1 }}>
+            {DIRECTORIES.find(d => d.id === activeDir).skills.map((skill) => (
+              <Skill key={`${activeDir}-${skill.name}`} skill={skill} />
+            ))}
+          </div>
+
+          <div style={{ marginTop: 'auto', paddingTop: '10px' }}>
+            <span className="terminal-line" style={{ opacity: 0.5 }}>C:\&gt; </span>
+            <span className="cursor-blink" />
+          </div>
         </div>
+        
       </div>
     </div>
   )

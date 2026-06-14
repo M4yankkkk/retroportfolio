@@ -21,7 +21,9 @@ const DIRECTORIES = [
   { name: 'ABOUT', id: 'about' },
   { name: 'PROJECTS', id: 'projects' },
   { name: 'SKILLS', id: 'skills' },
-  { name: 'CONTACT', id: 'contact' }
+  { name: 'CONTACT', id: 'contact' },
+  { name: 'TERMINAL.EXE', id: 'terminal', isExe: true },
+  { name: 'SNAKE.EXE', id: 'snake', isExe: true }
 ]
 
 /**
@@ -46,12 +48,12 @@ export default function Hero({ onNavigate }) {
 
   if (onNavigate) {
     return (
-      <div className="dos-window" style={{ width: '350px', height: '350px', fontSize: '1rem', display: 'flex', flexDirection: 'column', animation: 'fadeIn 0.5s ease-out' }}>
+      <div className="dos-window" style={{ width: '350px', height: '390px', fontSize: '1rem', display: 'flex', flexDirection: 'column', animation: 'fadeIn 0.5s ease-out' }}>
         <div className="dos-titlebar">
           <span>■ COMMAND.COM</span>
           <span>[ ? ] [ □ ] [ ✕ ]</span>
         </div>
-        <div className="dos-content" style={{ flex: 1, overflow: 'hidden', padding: '10px 12px' }}>
+        <div className="dos-content" style={{ flex: 1, overflowY: 'auto', padding: '10px 12px' }}>
           <div style={{ color: '#33ff33', marginBottom: '15px' }}>
             C:\&gt; DIR<br />
             Volume in drive C is PORTFOLIO<br />
@@ -74,7 +76,7 @@ export default function Hero({ onNavigate }) {
                 style={{
                   display: 'flex',
                   justifyContent: 'space-between',
-                  width: '200px',
+                  width: '100%',
                   cursor: 'pointer',
                   padding: '2px 8px',
                   fontFamily: 'VT323, monospace',
@@ -84,7 +86,7 @@ export default function Hero({ onNavigate }) {
                 }}
               >
                 <span>{dir.name}</span>
-                <span>&lt;DIR&gt;</span>
+                <span>{dir.isExe ? '<EXE>' : '<DIR>'}</span>
               </div>
             ))}
           </div>

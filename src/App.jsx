@@ -138,7 +138,7 @@ const CAMERA_PRESETS = {
   // projects: { pos: [0.44, 0.25, 0.97], tgt: [-0.45, -0.42, -0.04], html: { pos: [0.06, 0.42, 0.35], scale: 0.30 } },
 
   projects: { pos: [0.38, 0.28, 1.07], tgt: [-0.24, -0.42, -0.04], html: { pos: [0.06, 0.42, 0.35], scale: 0.30 } },
-  skills: { pos: [-0.38, 0.29, 1.13], tgt: [0.3, -0.33, -0.04], html: { pos: [0.06, 0.42, 0.35], scale: 0.30 } },
+  skills: { pos: [-0.38, 0.29, 1.13], tgt: [0.3, -0.33, -0.04], html: { pos: [0.04, 0.42, 0.35], scale: 0.30 } },
   contact: { pos: [-0.04, 0.23, 1.41], tgt: [0.14, -0.38, -0.35], html: { pos: [0.06, 0.40, 0.31], scale: 0.30 } },
 }
 
@@ -147,6 +147,7 @@ export default function App() {
   const [loadDone, setLoadDone] = useState(false)
   const [activeSection, setActiveSection] = useState('hero')
   const [interactiveSection, setInteractiveSection] = useState('hero')
+  const [previousSection, setPreviousSection] = useState('hero')
   const [isMobile, setIsMobile] = useState(false)
   const [isInteractive, setIsInteractive] = useState(false)
   const [lenisInst, setLenisInst] = useState(null)
@@ -420,7 +421,7 @@ export default function App() {
       {loadDone && !isMobile && (
         <div style={{ position: 'fixed', top: '1.5rem', right: '1.5rem', zIndex: 9000, display: 'flex', alignItems: 'center', gap: 10, fontFamily: 'VT323, monospace', color: '#33ff33', fontSize: '1.2rem', textShadow: '0 0 5px #33ff33' }}>
           <span style={{ opacity: isInteractive ? 0.5 : 1, cursor: 'pointer' }} onClick={() => setIsInteractive(false)}>STORY</span>
-          <div 
+          <div
             onClick={() => setIsInteractive(!isInteractive)}
             style={{ width: 44, height: 22, border: '2px solid #33ff33', borderRadius: 12, position: 'relative', cursor: 'pointer', background: 'rgba(0,0,0,0.5)' }}
           >
@@ -434,13 +435,20 @@ export default function App() {
       {!isInteractive && <RetroNav activeSection={activeSection} />}
 
       {/* Fixed 3D canvas */}
-      <div id="canvas-container" aria-hidden="true" style={{ background: '#080808' }}>
+      <div id="canvas-container" aria-hidden={isInteractive ? undefined : "true"} style={{ background: '#080808' }}>
         <Scene
           cameraState={cameraState.current}
           htmlState={htmlState.current}
           activeSection={isInteractive ? interactiveSection : activeSection}
           isMobile={isMobile}
-          onNavigate={isInteractive ? setInteractiveSection : null}
+          onNavigate={isInteractive ? (section) => {
+            setPreviousSection(interactiveSection)
+            setInteractiveSection(section)
+          } : null}
+          onBack={isInteractive ? () => {
+            setInteractiveSection(previousSection)
+            setPreviousSection('hero')
+          } : null}
         />
       </div>
 

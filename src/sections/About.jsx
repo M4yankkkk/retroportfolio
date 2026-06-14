@@ -2,13 +2,11 @@
  * About.exe — retro window overlay for the About section.
  * Shown on the PCjr screen when camera dollies to the about angle.
  */
-export default function About({ onNavigate }) {
+export default function About({ onNavigate, onBack }) {
   const handleClose = () => {
-    if (onNavigate) {
-      onNavigate('hero')
-    } else {
-      document.getElementById('section-hero')?.scrollIntoView({ behavior: 'smooth' })
-    }
+    if (onBack) onBack()
+    else if (onNavigate) onNavigate('hero')
+    else document.getElementById('section-hero')?.scrollIntoView({ behavior: 'smooth' })
   }
 
   return (

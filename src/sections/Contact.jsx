@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react'
 
-export default function Contact({ onNavigate }) {
+export default function Contact({ onNavigate, onBack }) {
   const [form, setForm] = useState({ name: '', email: '', message: '' })
   const [sent, setSent] = useState(false)
   const [sending, setSending] = useState(false)
@@ -31,11 +31,9 @@ export default function Contact({ onNavigate }) {
   }
 
   const handleClose = () => {
-    if (onNavigate) {
-      onNavigate('hero')
-    } else {
-      document.getElementById('section-hero')?.scrollIntoView({ behavior: 'smooth' })
-    }
+    if (onBack) onBack()
+    else if (onNavigate) onNavigate('hero')
+    else document.getElementById('section-hero')?.scrollIntoView({ behavior: 'smooth' })
   }
 
   return (

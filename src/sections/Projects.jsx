@@ -33,16 +33,14 @@ const PROJECTS = [
   },
 ]
 
-export default function Projects({ onNavigate }) {
+export default function Projects({ onNavigate, onBack }) {
   const [selected, setSelected] = useState(null)
   const [hovered, setHovered] = useState(null)
 
   const handleClose = () => {
-    if (onNavigate) {
-      onNavigate('hero')
-    } else {
-      document.getElementById('section-hero')?.scrollIntoView({ behavior: 'smooth' })
-    }
+    if (onBack) onBack()
+    else if (onNavigate) onNavigate('hero')
+    else document.getElementById('section-hero')?.scrollIntoView({ behavior: 'smooth' })
   }
 
   if (selected) {
