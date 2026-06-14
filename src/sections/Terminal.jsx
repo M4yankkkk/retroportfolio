@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react'
+import { useRetroAudio } from '../hooks/useRetroAudio'
 
 export default function Terminal({ onNavigate, onBack }) {
+  const { playKeyClack, playBlip, playCloseBlip } = useRetroAudio()
   const [history, setHistory] = useState([
     { type: 'output', text: 'MS-DOS Version 6.22' },
     { type: 'output', text: '(C)Copyright Microsoft Corp 1981-1994.' },
@@ -25,6 +27,8 @@ export default function Terminal({ onNavigate, onBack }) {
   }, [history])
 
   const handleKeyDown = (e) => {
+    // Clack on every keypress
+    if (e.key.length === 1 || e.key === 'Backspace') playKeyClack()
     if (e.key === 'Enter') {
       const cmd = input.trim()
       if (!cmd) {
@@ -113,7 +117,7 @@ export default function Terminal({ onNavigate, onBack }) {
       <div className="dos-titlebar">
         <span>■ TERMINAL.EXE</span>
         <button 
-          onClick={(e) => { e.stopPropagation(); if (onBack) onBack(); else if (onNavigate) onNavigate('hero'); }}
+          onClick={(e) => { e.stopPropagation(); playCloseBlip(); if (onBack) onBack(); else if (onNavigate) onNavigate('hero'); }}
           className="retro-btn"
           style={{ padding: '2px 8px', fontSize: '0.9rem', cursor: 'pointer' }}
         >

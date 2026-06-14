@@ -1,4 +1,4 @@
-import { Suspense, useRef, useEffect, useState } from 'react'
+import React, { Suspense, useRef, useEffect, useState, useMemo } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { Html, OrbitControls } from '@react-three/drei'
 import { EffectComposer, Bloom } from '@react-three/postprocessing'
@@ -145,7 +145,52 @@ function CameraController({ cameraState }) {
 }
 
 /**
- * Desk geometry — simple dark wood surface + floor plane.
+ * StarField — 2000 procedural stars as a deep-space backdrop.
+ */
+function StarField() {
+  const ref = useRef()
+  const STAR_COUNT = 2000
+
+  const positions = useMemo(() => {
+    const arr = new Float32Array(STAR_COUNT * 3)
+    for (let i = 0; i < STAR_COUNT; i++) {
+      // Distribute on a large sphere shell around the scene
+      const theta = Math.random() * Math.PI * 2
+      const phi = Math.acos(2 * Math.random() - 1)
+      const r = 20 + Math.random() * 30
+      arr[i * 3]     = r * Math.sin(phi) * Math.cos(theta)
+      arr[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta)
+      arr[i * 3 + 2] = r * Math.cos(phi)
+    }
+    return arr
+  }, [])
+
+  useFrame(({ clock }) => {
+    if (!ref.current) return
+    // Very slow drift rotation to give parallax depth
+    ref.current.rotation.y = clock.getElapsedTime() * 0.005
+    ref.current.rotation.x = Math.sin(clock.getElapsedTime() * 0.003) * 0.05
+  })
+
+  return (
+    <points ref={ref}>
+      <bufferGeometry>
+        <bufferAttribute attach="attributes-position" array={positions} count={STAR_COUNT} itemSize={3} />
+      </bufferGeometry>
+      <pointsMaterial
+        color={new THREE.Color(0xddeeff)}
+        size={0.08}
+        sizeAttenuation
+        transparent
+        opacity={0.75}
+        depthWrite={false}
+      />
+    </points>
+  )
+}
+
+/**
+ * Desk geometry — floating in deep space.
  */
 function Desk() {
   return (
@@ -155,22 +200,24 @@ function Desk() {
         <boxGeometry args={[4, 0.07, 2.2]} />
         <meshStandardMaterial color={new THREE.Color(0x2a1a0e)} roughness={0.85} metalness={0.05} />
       </mesh>
-      {/* Desk legs */}
+      {/* Desk legs — shorter, fade into void */}
       {[[-1.8, -1], [1.8, -1], [-1.8, 1], [1.8, 1]].map(([x, z], i) => (
         <mesh key={i} castShadow position={[x, -1.0, z * 0.5]}>
           <boxGeometry args={[0.06, 1.0, 0.06]} />
           <meshStandardMaterial color={0x1a0e05} roughness={0.9} />
         </mesh>
       ))}
-      {/* Floor */}
-      <mesh receiveShadow rotation={[-Math.PI / 2, 0, 0]} position={[0, -1.56, 0]}>
-        <planeGeometry args={[14, 14]} />
-        <meshStandardMaterial color={new THREE.Color(0x0d0d0d)} roughness={0.95} />
-      </mesh>
-      {/* Wall behind */}
-      <mesh receiveShadow position={[0, 2, -3]}>
-        <planeGeometry args={[12, 8]} />
-        <meshStandardMaterial color={new THREE.Color(0x111111)} roughness={1} />
+      {/* Subtle green glow beneath desk — CRT ambient bounce */}
+      <pointLight position={[0, -0.7, 0.2]} intensity={0.4} color={0x003311} distance={2.5} decay={2} />
+      {/* Volumetric floor mist — a large dark semi-transparent plane below desk */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -1.58, 0]}>
+        <planeGeometry args={[12, 12]} />
+        <meshStandardMaterial
+          color={new THREE.Color(0x020408)}
+          roughness={1}
+          transparent
+          opacity={0.85}
+        />
       </mesh>
     </group>
   )
@@ -244,45 +291,52 @@ export default function Scene({ cameraState, htmlState, activeSection, isMobile,
       dpr={[1, 2]}
       camera={{ position: [0.3, 0.9, 2.2], fov: 45, near: 0.1, far: 100 }}
       gl={{ antialias: true, toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 1.1 }}
-      style={{ background: '#080808' }}
+      style={{ background: '#00010a' }}
     >
       {/* Camera controller */}
       {!isMobile && cameraState && <CameraController cameraState={cameraState} />}
       {isMobile && <OrbitControls enableZoom={false} enablePan={false} autoRotate autoRotateSpeed={0.4} />}
 
       {/* ── Lighting ── */}
-      {/* Low ambient fill */}
-      <ambientLight intensity={0.08} color={0xffeedd} />
+      {/* Low ambient fill — deep space cold blue */}
+      <ambientLight intensity={0.05} color={0x0a1030} />
 
       {/* Warm desk-lamp spotlight */}
       <spotLight
         position={[1.5, 3.5, 2.0]}
         angle={0.35}
         penumbra={0.7}
-        intensity={60}
+        intensity={55}
         color={0xffcc88}
         castShadow
         shadow-mapSize={[1024, 1024]}
         shadow-bias={-0.001}
       />
 
-      {/* Rim light for silhouette */}
+      {/* Nebula rim — cool purple from top-left */}
       <directionalLight
-        position={[-3, 2, -2]}
-        intensity={0.3}
-        color={0x334466}
+        position={[-4, 3, -2]}
+        intensity={0.5}
+        color={0x5533aa}
+      />
+      {/* Nebula rim — teal accent from right */}
+      <directionalLight
+        position={[4, 1, -1]}
+        intensity={0.25}
+        color={0x004466}
       />
 
       {/* CRT screen glow — behind the screen face, subtle */}
       <pointLight
         position={[0, 0.42, 0.10]}
-        intensity={0.5}
+        intensity={0.8}
         color={0x00ff44}
-        distance={1.8}
+        distance={2.2}
         decay={2}
       />
 
       {/* ── 3D Objects ── */}
+      <StarField />
       <Desk />
       <DustParticles />
 
@@ -313,10 +367,10 @@ export default function Scene({ cameraState, htmlState, activeSection, isMobile,
       {/* ── Post Processing ── */}
       <EffectComposer>
         <Bloom
-          luminanceThreshold={0.55}
-          luminanceSmoothing={0.6}
-          intensity={0.8}
-          radius={0.5}
+          luminanceThreshold={0.3}
+          luminanceSmoothing={0.7}
+          intensity={1.4}
+          radius={0.7}
         />
       </EffectComposer>
     </Canvas>

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { gsap } from 'gsap'
+import { useRetroAudio } from '../hooks/useRetroAudio'
 
 const BOOT_LINES = [
   { text: 'IBM PCjr BIOS v2.10', delay: 0, color: 'green' },
@@ -33,12 +34,15 @@ const DIRECTORIES = [
 export default function Hero({ onNavigate }) {
   const [visibleLines, setVisibleLines] = useState([])
   const containerRef = useRef()
+  const { playKeyClack, playFloppyChurn, playHoverBlip, playBlip, playCloseBlip } = useRetroAudio()
 
   useEffect(() => {
+    // Floppy churn during boot sequence
+    playFloppyChurn(2400)
     BOOT_LINES.forEach((line, i) => {
       setTimeout(() => {
         setVisibleLines(prev => [...prev, line])
-        // Auto-scroll to bottom
+        playKeyClack()
         if (containerRef.current) {
           containerRef.current.scrollTop = containerRef.current.scrollHeight
         }
@@ -64,8 +68,9 @@ export default function Hero({ onNavigate }) {
             {DIRECTORIES.map(dir => (
               <div
                 key={dir.id}
-                onClick={() => onNavigate(dir.id)}
+                onClick={() => { playBlip(660, 50); onNavigate(dir.id) }}
                 onMouseEnter={(e) => {
+                  playHoverBlip()
                   e.currentTarget.style.background = '#33ff33'
                   e.currentTarget.style.color = '#000'
                 }}
