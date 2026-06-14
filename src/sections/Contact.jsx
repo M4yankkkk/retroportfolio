@@ -49,7 +49,7 @@ export default function Contact({ onNavigate }) {
       <div className="dos-content" style={{ padding: '12px 14px' }}>
 
         {/* Terminal log */}
-        <div style={{ marginBottom: 10, maxHeight: 72, overflow: 'hidden' }}>
+        <div style={{ marginBottom: 6, maxHeight: 48, overflow: 'hidden' }}>
           {lines.map((l, i) => (
             <div key={i} className="terminal-line" style={{ fontSize: '0.8rem', opacity: l ? 1 : 0.1 }}>
               {l || '─'}
@@ -59,7 +59,7 @@ export default function Contact({ onNavigate }) {
 
         {!sent ? (
           <form onSubmit={handleSubmit}>
-            <div style={{ marginBottom: 10 }}>
+            <div style={{ marginBottom: 6 }}>
               <div className="terminal-line" style={{ fontSize: '0.85rem', marginBottom: 3 }}>FROM_NAME:</div>
               <input
                 className="retro-input"
@@ -72,7 +72,7 @@ export default function Contact({ onNavigate }) {
               />
             </div>
 
-            <div style={{ marginBottom: 10 }}>
+            <div style={{ marginBottom: 6 }}>
               <div className="terminal-line" style={{ fontSize: '0.85rem', marginBottom: 3 }}>FROM_EMAIL:</div>
               <input
                 className="retro-input"
@@ -85,7 +85,7 @@ export default function Contact({ onNavigate }) {
               />
             </div>
 
-            <div style={{ marginBottom: 14 }}>
+            <div style={{ marginBottom: 10 }}>
               <div className="terminal-line" style={{ fontSize: '0.85rem', marginBottom: 3 }}>MESSAGE_BODY:</div>
               <textarea
                 className="retro-input"
@@ -93,7 +93,7 @@ export default function Contact({ onNavigate }) {
                 value={form.message}
                 onChange={handleChange}
                 placeholder="Type your message..."
-                rows={3}
+                rows={2}
                 style={{ resize: 'none', display: 'block' }}
               />
             </div>

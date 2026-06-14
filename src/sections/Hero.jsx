@@ -44,29 +44,14 @@ export default function Hero({ onNavigate }) {
     })
   }, [])
 
-  return (
-    <div
-      ref={containerRef}
-      className="crt-screen"
-      style={{
-        width: '280px',
-        height: '350px',
-        overflow: 'hidden',
-        fontSize: '1rem',
-        // backgroundColor: onNavigate ? '#100e04' : undefined,
-        backgroundColor: '#100e04',
-
-      }}
-    >
-      {!onNavigate ? (
-        <>
-          {visibleLines.map((line, i) => (
-            <TypewriterLine key={i} line={line} />
-          ))}
-          <span className="cursor-blink" />
-        </>
-      ) : (
-        <div className="os-directory" style={{ animation: 'fadeIn 0.5s ease-out' }}>
+  if (onNavigate) {
+    return (
+      <div className="dos-window" style={{ width: '350px', height: '350px', fontSize: '1rem', display: 'flex', flexDirection: 'column', animation: 'fadeIn 0.5s ease-out' }}>
+        <div className="dos-titlebar">
+          <span>■ COMMAND.COM</span>
+          <span>[ ? ] [ □ ] [ ✕ ]</span>
+        </div>
+        <div className="dos-content" style={{ flex: 1, overflow: 'hidden', padding: '10px 12px' }}>
           <div style={{ color: '#33ff33', marginBottom: '15px' }}>
             C:\&gt; DIR<br />
             Volume in drive C is PORTFOLIO<br />
@@ -109,7 +94,31 @@ export default function Hero({ onNavigate }) {
             C:\&gt; <span className="cursor-blink" />
           </div>
         </div>
-      )}
+      </div>
+    )
+  }
+
+  return (
+    <div className="dos-window" style={{ width: '350px', height: '350px', fontSize: '1rem', display: 'flex', flexDirection: 'column' }}>
+      <div className="dos-titlebar">
+        <span>■ COMMAND.COM</span>
+        <span>[ ? ] [ □ ] [ ✕ ]</span>
+      </div>
+      <div
+        ref={containerRef}
+        className="dos-content"
+        style={{
+          flex: 1,
+          overflow: 'hidden',
+          backgroundColor: '#100e04',
+          padding: '10px 12px',
+        }}
+      >
+        {visibleLines.map((line, i) => (
+          <TypewriterLine key={i} line={line} />
+        ))}
+        <span className="cursor-blink" />
+      </div>
     </div>
   )
 }
