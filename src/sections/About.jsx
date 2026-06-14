@@ -2,12 +2,22 @@
  * About.exe — retro window overlay for the About section.
  * Shown on the PCjr screen when camera dollies to the about angle.
  */
-export default function About() {
+export default function About({ onNavigate }) {
+  const handleClose = () => {
+    if (onNavigate) {
+      onNavigate('hero')
+    } else {
+      document.getElementById('section-hero')?.scrollIntoView({ behavior: 'smooth' })
+    }
+  }
+
   return (
     <div className="dos-window" style={{ width: '340px', fontSize: '1rem' }}>
       <div className="dos-titlebar">
         <span>■ ABOUT.EXE</span>
-        <span>[ ? ] [ □ ] [ ✕ ]</span>
+        <span>
+          [ ? ] [ □ ] <span style={{ cursor: 'pointer' }} onClick={handleClose}>[ ✕ ]</span>
+        </span>
       </div>
       <div className="dos-content" style={{ padding: '12px 14px' }}>
         <div className="terminal-line amber" style={{ marginBottom: 8 }}>

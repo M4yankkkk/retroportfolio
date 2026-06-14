@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react'
 
-export default function Contact() {
+export default function Contact({ onNavigate }) {
   const [form, setForm] = useState({ name: '', email: '', message: '' })
   const [sent, setSent] = useState(false)
   const [sending, setSending] = useState(false)
@@ -30,11 +30,21 @@ export default function Contact() {
     setForm({ name: '', email: '', message: '' })
   }
 
+  const handleClose = () => {
+    if (onNavigate) {
+      onNavigate('hero')
+    } else {
+      document.getElementById('section-hero')?.scrollIntoView({ behavior: 'smooth' })
+    }
+  }
+
   return (
     <div className="dos-window" style={{ width: '340px' }}>
       <div className="dos-titlebar">
         <span>■ MAIL.EXE — SEND MESSAGE</span>
-        <span>[ □ ] [ ✕ ]</span>
+        <span>
+          [ □ ] <span style={{ cursor: 'pointer' }} onClick={handleClose}>[ ✕ ]</span>
+        </span>
       </div>
       <div className="dos-content" style={{ padding: '12px 14px' }}>
 

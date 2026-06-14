@@ -113,29 +113,6 @@ body::before {
   z-index: 10;
 }
 
-/* Moving scanline */
-.crt-screen::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 40px;
-  background: linear-gradient(
-    transparent 0%,
-    rgba(51, 255, 51, 0.06) 50%,
-    transparent 100%
-  );
-  animation: scanline 6s linear infinite;
-  pointer-events: none;
-  z-index: 11;
-}
-
-@keyframes scanline {
-  0%   { top: -40px; }
-  100% { top: 100%; }
-}
-
 /* ─── Terminal Text ─────────────────────────────────────── */
 .terminal-line {
   font-family: 'VT323', monospace;

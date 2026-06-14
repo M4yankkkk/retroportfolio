@@ -33,9 +33,17 @@ const PROJECTS = [
   },
 ]
 
-export default function Projects() {
+export default function Projects({ onNavigate }) {
   const [selected, setSelected] = useState(null)
   const [hovered, setHovered] = useState(null)
+
+  const handleClose = () => {
+    if (onNavigate) {
+      onNavigate('hero')
+    } else {
+      document.getElementById('section-hero')?.scrollIntoView({ behavior: 'smooth' })
+    }
+  }
 
   if (selected) {
     return <ProjectModal project={selected} onClose={() => setSelected(null)} />
@@ -45,7 +53,9 @@ export default function Projects() {
     <div className="dos-window" style={{ width: '380px', fontSize: '0.95rem' }}>
       <div className="dos-titlebar">
         <span>■ C:\PROJECTS\</span>
-        <span>[ □ ] [ ✕ ]</span>
+        <span>
+          [ □ ] <span style={{ cursor: 'pointer' }} onClick={handleClose}>[ ✕ ]</span>
+        </span>
       </div>
       <div className="dos-content">
         <div className="terminal-line" style={{ marginBottom: 6, color: 'rgba(51,255,51,0.5)', fontSize: '0.85rem' }}>

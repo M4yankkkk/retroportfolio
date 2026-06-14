@@ -48,7 +48,7 @@ function SkillBar({ skill, animate }) {
   )
 }
 
-export default function Skills() {
+export default function Skills({ onNavigate }) {
   const [animate, setAnimate] = useState(false)
   const ref = useRef()
 
@@ -61,11 +61,21 @@ export default function Skills() {
     return () => trigger.kill()
   }, [])
 
+  const handleClose = () => {
+    if (onNavigate) {
+      onNavigate('hero')
+    } else {
+      document.getElementById('section-hero')?.scrollIntoView({ behavior: 'smooth' })
+    }
+  }
+
   return (
     <div className="dos-window" ref={ref} style={{ width: '380px', fontSize: '0.85rem' }}>
       <div className="dos-titlebar">
         <span>■ SYSINFO.EXE — SKILLS</span>
-        <span>[ □ ] [ ✕ ]</span>
+        <span>
+          [ □ ] <span style={{ cursor: 'pointer' }} onClick={handleClose}>[ ✕ ]</span>
+        </span>
       </div>
       <div className="dos-content" style={{ padding: '10px 12px' }}>
         <div className="terminal-line amber" style={{ marginBottom: 8, fontSize: '0.8rem' }}>

@@ -146,10 +146,14 @@ export default function App() {
   const [loadProgress, setLoadProgress] = useState(0)
   const [loadDone, setLoadDone] = useState(false)
   const [activeSection, setActiveSection] = useState('hero')
+  const [interactiveSection, setInteractiveSection] = useState('hero')
   const [isMobile, setIsMobile] = useState(false)
+  const [isInteractive, setIsInteractive] = useState(false)
+  const [lenisInst, setLenisInst] = useState(null)
 
   const [debugCam, setDebugCam] = useState({ x: 0.3, y: 0.9, z: 2.2, tx: 0, ty: 0.42, tz: 0 })
   const [debugHtml, setDebugHtml] = useState({ hx: 0.06, hy: 0.42, hz: 0.41, hs: 0.30 })
+  const [debugBox, setDebugBox] = useState({ bw: 1.10, bh: 0.52, bd: 1.48, bx: -0.12, by: 0.24, bz: 0.23, show: 0 })
   const [savedPresets, setSavedPresets] = useState({})
   const [showSliders, setShowSliders] = useState(true)
 
@@ -180,7 +184,8 @@ export default function App() {
     cameraState.current.target.set(debugCam.tx, debugCam.ty, debugCam.tz)
     htmlState.current.position.set(debugHtml.hx, debugHtml.hy, debugHtml.hz)
     htmlState.current.scale.setScalar(debugHtml.hs)
-  }, [debugCam, debugHtml])
+    htmlState.current.boxData = { w: debugBox.bw, h: debugBox.bh, d: debugBox.bd, x: debugBox.bx, y: debugBox.by, z: debugBox.bz, show: debugBox.show }
+  }, [debugCam, debugHtml, debugBox])
 
   // ── Detect mobile ──
   useEffect(() => {
@@ -215,6 +220,8 @@ export default function App() {
       smoothWheel: true,
     })
 
+    setLenisInst(lenis)
+
     lenis.on('scroll', ScrollTrigger.update)
 
     gsap.ticker.add((time) => {
@@ -223,9 +230,44 @@ export default function App() {
     gsap.ticker.lagSmoothing(0)
 
     return () => {
+      setLenisInst(null)
       lenis.destroy()
     }
   }, [loadDone])
+
+  // ── Handle Interactive Mode Toggle ──
+  useEffect(() => {
+    if (!isInteractive) {
+      document.body.style.overflow = 'auto'
+      lenisInst?.start()
+      // Animate back to current section's preset
+      const cfg = CAMERA_PRESETS[activeSection] || CAMERA_PRESETS.hero
+      if (!isMobile) {
+        gsap.to(cameraState.current.position, {
+          x: cfg.pos[0], y: cfg.pos[1], z: cfg.pos[2],
+          duration: 1.5, ease: 'power2.inOut', overwrite: 'auto'
+        })
+        gsap.to(cameraState.current.target, {
+          x: cfg.tgt[0], y: cfg.tgt[1], z: cfg.tgt[2],
+          duration: 1.5, ease: 'power2.inOut', overwrite: 'auto'
+        })
+      }
+    } else {
+      document.body.style.overflow = 'hidden'
+      lenisInst?.stop()
+      // Animate to perfectly frame the screen
+      if (!isMobile) {
+        gsap.to(cameraState.current.position, {
+          x: 0.08, y: 0.15, z: 1.16, // close up
+          duration: 1.5, ease: 'power2.inOut', overwrite: 'auto'
+        })
+        gsap.to(cameraState.current.target, {
+          x: 0.03, y: -0.31, z: -0.32,
+          duration: 1.5, ease: 'power2.inOut', overwrite: 'auto'
+        })
+      }
+    }
+  }, [isInteractive, lenisInst, activeSection, isMobile])
 
   // ── GSAP ScrollTrigger camera choreography ──
   useEffect(() => {
@@ -349,6 +391,16 @@ export default function App() {
                 </div>
               ))}
 
+              <div style={{ height: '5px', borderBottom: '1px solid lime', marginBottom: '10px' }} />
+
+              {['bw', 'bh', 'bd', 'bx', 'by', 'bz', 'show'].map(axis => (
+                <div key={axis} style={{ marginBottom: '5px', display: 'flex', alignItems: 'center' }}>
+                  <label style={{ display: 'inline-block', width: '30px' }}>B_{axis.replace('b', '').toUpperCase()}</label>
+                  <input type="range" min={axis === 'show' ? 0 : -3} max={axis === 'show' ? 1 : 3} step={axis === 'show' ? 1 : 0.01} value={debugBox[axis]} onChange={(e) => setDebugBox({ ...debugBox, [axis]: parseFloat(e.target.value) })} style={{ width: '150px' }} />
+                  <span style={{ marginLeft: '10px', width: '40px', textAlign: 'right' }}>{debugBox[axis].toFixed(2)}</span>
+                </div>
+              ))}
+
               <div style={{ marginTop: '15px', display: 'flex', justifyContent: 'space-between' }}>
                 <button onClick={() => setSavedPresets({ ...savedPresets, [activeSection]: { pos: [debugCam.x, debugCam.y, debugCam.z], tgt: [debugCam.tx, debugCam.ty, debugCam.tz], html: { pos: [debugHtml.hx, debugHtml.hy, debugHtml.hz], scale: debugHtml.hs } } })} style={{ background: 'green', color: 'black', padding: '5px 15px', border: 'none', cursor: 'pointer', fontFamily: 'VT323, monospace', fontSize: '1.1rem' }}>Save</button>
                 <button onClick={() => navigator.clipboard.writeText(JSON.stringify(savedPresets, null, 2)).then(() => alert('Copied to clipboard!'))} style={{ background: 'lime', color: 'black', padding: '5px 15px', border: 'none', cursor: 'pointer', fontFamily: 'VT323, monospace', fontSize: '1.1rem' }}>Export</button>
@@ -364,16 +416,31 @@ export default function App() {
       {/* Audio toggle */}
       <AudioToggle />
 
+      {/* Mode Toggle */}
+      {loadDone && !isMobile && (
+        <div style={{ position: 'fixed', top: '1.5rem', right: '1.5rem', zIndex: 9000, display: 'flex', alignItems: 'center', gap: 10, fontFamily: 'VT323, monospace', color: '#33ff33', fontSize: '1.2rem', textShadow: '0 0 5px #33ff33' }}>
+          <span style={{ opacity: isInteractive ? 0.5 : 1, cursor: 'pointer' }} onClick={() => setIsInteractive(false)}>STORY</span>
+          <div 
+            onClick={() => setIsInteractive(!isInteractive)}
+            style={{ width: 44, height: 22, border: '2px solid #33ff33', borderRadius: 12, position: 'relative', cursor: 'pointer', background: 'rgba(0,0,0,0.5)' }}
+          >
+            <div style={{ position: 'absolute', top: 2, left: isInteractive ? 24 : 2, width: 14, height: 14, background: '#33ff33', borderRadius: '50%', transition: 'left 0.3s cubic-bezier(0.4, 0, 0.2, 1)' }} />
+          </div>
+          <span style={{ opacity: isInteractive ? 1 : 0.5, cursor: 'pointer' }} onClick={() => setIsInteractive(true)}>INTERACTIVE</span>
+        </div>
+      )}
+
       {/* Retro side nav */}
-      <RetroNav activeSection={activeSection} />
+      {!isInteractive && <RetroNav activeSection={activeSection} />}
 
       {/* Fixed 3D canvas */}
-      <div id="canvas-container" aria-hidden="true">
+      <div id="canvas-container" aria-hidden="true" style={{ background: '#080808' }}>
         <Scene
           cameraState={cameraState.current}
           htmlState={htmlState.current}
-          activeSection={activeSection}
+          activeSection={isInteractive ? interactiveSection : activeSection}
           isMobile={isMobile}
+          onNavigate={isInteractive ? setInteractiveSection : null}
         />
       </div>
 

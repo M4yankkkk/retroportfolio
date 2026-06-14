@@ -1,4 +1,4 @@
-import { Suspense, useRef, useEffect } from 'react'
+import { Suspense, useRef, useEffect, useState } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { Html, OrbitControls } from '@react-three/drei'
 import { EffectComposer, Bloom } from '@react-three/postprocessing'
@@ -18,30 +18,128 @@ const SCREEN_SECTIONS = ['hero', 'about', 'projects', 'skills', 'contact']
 /**
  * HtmlRig — applies htmlState dynamically.
  */
-function HtmlRig({ htmlState, children }) {
+function HtmlRig({ htmlState, children, refs }) {
   const groupRef = useRef()
+
   useFrame(() => {
     if (!htmlState || !groupRef.current) return
     groupRef.current.position.copy(htmlState.position)
-    // Three.js doesn't have a Vector3.setScalar to scale easily via .copy from a single value if it's passed as a Vector3,
-    // but in App.jsx we set htmlState.current.scale to a Vector3 (via .setScalar), so we can just .copy it:
     groupRef.current.scale.copy(htmlState.scale)
+
+    if (htmlState.boxData && refs[0].current) {
+      // Use bw, bh, bd for the "hole" dimensions.
+      const w = htmlState.boxData.w
+      const h = htmlState.boxData.h
+      const d = htmlState.boxData.d
+      const ox = htmlState.boxData.x || 0
+      const oy = htmlState.boxData.y || 0
+      const oz = htmlState.boxData.z || 0
+      const show = htmlState.boxData.show
+      const t = 1.0 // thick walls to catch extreme angles
+
+      // Left
+      refs[0].current.scale.set(t, h + 2 * t, d)
+      refs[0].current.position.set(-w / 2 - t / 2 + ox, oy, -d / 2 + oz)
+      // Right
+      refs[1].current.scale.set(t, h + 2 * t, d)
+      refs[1].current.position.set(w / 2 + t / 2 + ox, oy, -d / 2 + oz)
+      // Top
+      refs[2].current.scale.set(w, t, d)
+      refs[2].current.position.set(ox, h / 2 + t / 2 + oy, -d / 2 + oz)
+      // Bottom
+      refs[3].current.scale.set(w, t, d)
+      refs[3].current.position.set(ox, -h / 2 - t / 2 + oy, -d / 2 + oz)
+      // Back
+      refs[4].current.scale.set(w + 2 * t, h + 2 * t, t)
+      refs[4].current.position.set(ox, oy, -d - t / 2 + oz)
+
+      refs.forEach(r => {
+        if (r.current && r.current.material) {
+          r.current.material.wireframe = show === 1
+          r.current.material.colorWrite = show === 1
+          r.current.material.depthWrite = show === 1
+          r.current.material.needsUpdate = true
+        }
+      })
+    }
   })
-  return <group ref={groupRef}>{children}</group>
+
+  return (
+    <group ref={groupRef}>
+      <mesh ref={refs[0]}><boxGeometry args={[1, 1, 1]} /><meshBasicMaterial color="red" colorWrite={false} depthWrite={false} /></mesh>
+      <mesh ref={refs[1]}><boxGeometry args={[1, 1, 1]} /><meshBasicMaterial color="red" colorWrite={false} depthWrite={false} /></mesh>
+      <mesh ref={refs[2]}><boxGeometry args={[1, 1, 1]} /><meshBasicMaterial color="red" colorWrite={false} depthWrite={false} /></mesh>
+      <mesh ref={refs[3]}><boxGeometry args={[1, 1, 1]} /><meshBasicMaterial color="red" colorWrite={false} depthWrite={false} /></mesh>
+      <mesh ref={refs[4]}><boxGeometry args={[1, 1, 1]} /><meshBasicMaterial color="red" colorWrite={false} depthWrite={false} /></mesh>
+      {children}
+    </group>
+  )
 }
 
 /**
- * CameraRig — reads cameraState (position + target vectors) updated by scroll,
- * and smoothly lerps the R3F camera each frame.
+ * CameraController — allows scroll-driven cinematic movement, 
+ * but yields to user interaction (rotation & pinch-to-zoom).
  */
-function CameraRig({ cameraState }) {
-  const { camera } = useThree()
+function CameraController({ cameraState }) {
+  const { camera, gl } = useThree()
+  const controls = useRef()
+  const userInteracting = useRef(false)
+
+  useEffect(() => {
+    const canvas = gl.domElement
+
+    const handleWheel = (e) => {
+      // Pinch-to-zoom or Ctrl+Scroll
+      if (e.ctrlKey || e.metaKey) {
+        e.preventDefault()
+        userInteracting.current = true
+
+        if (controls.current) {
+          // Zoom by changing FOV to avoid fighting OrbitControls target distance
+          const newFov = camera.fov + e.deltaY * 0.05
+          camera.fov = THREE.MathUtils.clamp(newFov, 15, 100)
+          camera.updateProjectionMatrix()
+        }
+      } else {
+        // Normal page scroll -> snap back to programmatic track
+        userInteracting.current = false
+      }
+    }
+
+    const handlePointerDown = () => {
+      userInteracting.current = true
+    }
+
+    canvas.addEventListener('wheel', handleWheel, { passive: false })
+    canvas.addEventListener('pointerdown', handlePointerDown)
+
+    return () => {
+      canvas.removeEventListener('wheel', handleWheel)
+      canvas.removeEventListener('pointerdown', handlePointerDown)
+    }
+  }, [camera, gl])
+
   useFrame(() => {
-    if (!cameraState) return
-    camera.position.lerp(cameraState.position, 0.05)
-    camera.lookAt(cameraState.target)
+    if (!cameraState || !controls.current) return
+
+    // If not interacting, smoothly pull camera and target to the scroll track
+    if (!userInteracting.current) {
+      camera.position.lerp(cameraState.position, 0.05)
+      controls.current.target.lerp(cameraState.target, 0.05)
+      controls.current.update()
+    }
   })
-  return null
+
+  return (
+    <OrbitControls
+      ref={controls}
+      enableZoom={false} // We handle zoom manually so we don't break page scroll
+      enablePan={false}
+      enableDamping={true}
+      dampingFactor={0.05}
+      makeDefault
+    />
+  )
 }
 
 /**
@@ -79,22 +177,51 @@ function Desk() {
 /**
  * Screen content switcher — renders the right section overlay on the monitor.
  */
-function ScreenContent({ activeSection }) {
-  const map = {
-    hero: <Hero />,
-    about: <About />,
-    projects: <Projects />,
-    skills: <Skills />,
-    contact: <Contact />,
+function ScreenContent({ activeSection, onNavigate }) {
+  const [displaySection, setDisplaySection] = useState(activeSection)
+  const [isClearing, setIsClearing] = useState(false)
+
+  useEffect(() => {
+    if (activeSection !== displaySection) {
+      setIsClearing(true)
+      const timer = setTimeout(() => {
+        setDisplaySection(activeSection)
+        setIsClearing(false)
+      }, 300) // 300ms DOS clear effect
+      return () => clearTimeout(timer)
+    }
+  }, [activeSection, displaySection])
+
+  if (isClearing) {
+    return (
+      <div className="dos-window" style={{ width: '100%', height: '100%', minHeight: '200px', padding: '10px 12px', boxSizing: 'border-box' }}>
+        <div style={{ color: '#33ff33', fontFamily: 'VT323, monospace', fontSize: '1rem' }}>
+          C:\&gt; CLS<br />
+          <span className="cursor-blink" />
+        </div>
+      </div>
+    )
   }
-  return map[activeSection] || <Hero />
+
+  const map = {
+    hero: <Hero onNavigate={onNavigate} />,
+    about: <About onNavigate={onNavigate} />,
+    projects: <Projects onNavigate={onNavigate} />,
+    skills: <Skills onNavigate={onNavigate} />,
+    contact: <Contact onNavigate={onNavigate} />,
+  }
+  return map[displaySection] || <Hero onNavigate={onNavigate} />
 }
+
+
 
 /**
  * The main R3F scene graph.
  */
-export default function Scene({ cameraState, htmlState, activeSection, isMobile }) {
+export default function Scene({ cameraState, htmlState, activeSection, isMobile, onNavigate }) {
   const mouseParallax = useRef({ x: 0, y: 0 })
+  const r0 = useRef(), r1 = useRef(), r2 = useRef(), r3 = useRef(), r4 = useRef()
+  const occludeRefs = [r0, r1, r2, r3, r4]
 
   useEffect(() => {
     const onMove = (e) => {
@@ -116,7 +243,7 @@ export default function Scene({ cameraState, htmlState, activeSection, isMobile 
       style={{ background: '#080808' }}
     >
       {/* Camera controller */}
-      {!isMobile && cameraState && <CameraRig cameraState={cameraState} />}
+      {!isMobile && cameraState && <CameraController cameraState={cameraState} />}
       {isMobile && <OrbitControls enableZoom={false} enablePan={false} autoRotate autoRotateSpeed={0.4} />}
 
       {/* ── Lighting ── */}
@@ -159,14 +286,20 @@ export default function Scene({ cameraState, htmlState, activeSection, isMobile 
       <Suspense fallback={<PCjrPlaceholder mouseParallax={mouseParallax.current} />}>
         <PCjr mouseParallax={mouseParallax.current}>
           {/* Screen HTML overlay — centered on the CRT screen face */}
-          <HtmlRig htmlState={htmlState}>
+          <HtmlRig htmlState={htmlState} refs={occludeRefs}>
             <Html
               transform
+              occlude={occludeRefs}
               distanceFactor={1}
-              style={{ userSelect: 'none', pointerEvents: 'auto' }}
+              style={{
+                userSelect: 'none',
+                pointerEvents: 'auto',
+                backfaceVisibility: 'hidden',
+                WebkitBackfaceVisibility: 'hidden'
+              }}
             >
-              <div style={{ width: 280, marginLeft: -140, marginTop: -70 }}>
-                <ScreenContent activeSection={activeSection} />
+              <div style={{ width: 280, marginLeft: -140, marginTop: -70, backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' }}>
+                <ScreenContent activeSection={activeSection} onNavigate={onNavigate} />
               </div>
             </Html>
           </HtmlRig>
