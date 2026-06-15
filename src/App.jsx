@@ -152,22 +152,23 @@ export default function App() {
   const [isInteractive, setIsInteractive] = useState(false)
   const [lenisInst, setLenisInst] = useState(null)
 
-  const [debugCam, setDebugCam] = useState({ x: 0.3, y: 0.9, z: 2.2, tx: 0, ty: 0.42, tz: 0 })
-  const [debugHtml, setDebugHtml] = useState({ hx: 0.06, hy: 0.42, hz: 0.41, hs: 0.30 })
+  const p = CAMERA_PRESETS.hero
+  const [debugCam, setDebugCam] = useState({ x: p.pos[0], y: p.pos[1], z: p.pos[2], tx: p.tgt[0], ty: p.tgt[1], tz: p.tgt[2] })
+  const [debugHtml, setDebugHtml] = useState({ hx: p.html.pos[0], hy: p.html.pos[1], hz: p.html.pos[2], hs: p.html.scale })
   const [debugBox, setDebugBox] = useState({ bw: 1.10, bh: 0.52, bd: 1.48, bx: -0.12, by: 0.24, bz: 0.23, show: 0 })
   const [savedPresets, setSavedPresets] = useState({})
   const [showSliders, setShowSliders] = useState(true)
 
   // Camera state — mutable refs so R3F can read each frame without re-renders
   const cameraState = useRef({
-    position: new THREE.Vector3(0.3, 0.9, 2.2),
-    target: new THREE.Vector3(0, 0.42, 0),
+    position: new THREE.Vector3(...p.pos),
+    target: new THREE.Vector3(...p.tgt),
   })
 
   // Html overlay state
   const htmlState = useRef({
-    position: new THREE.Vector3(0.06, 0.42, 0.41),
-    scale: new THREE.Vector3(0.30, 0.30, 0.30),
+    position: new THREE.Vector3(...p.html.pos),
+    scale: new THREE.Vector3(p.html.scale, p.html.scale, p.html.scale),
   })
 
   // Sync debug sliders when scrolling to a new section
@@ -336,7 +337,15 @@ export default function App() {
       })
     })
 
+    // Force a ScrollTrigger refresh after a short delay.
+    // This fixes the "slightly shifted window" issue on first load caused by
+    // the loading screen unmounting or the browser restoring scroll asynchronously.
+    const refreshTimer = setTimeout(() => {
+      ScrollTrigger.refresh()
+    }, 150)
+
     return () => {
+      clearTimeout(refreshTimer)
       triggers.forEach(t => t.kill())
       ScrollTrigger.getAll().forEach(st => st.kill())
     }
