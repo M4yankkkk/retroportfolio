@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react'
 
 export default function Contact({ onNavigate, onBack }) {
-  const [form, setForm] = useState({ name: '', email: '', message: '' })
+  const [form, setForm] = useState({ name: '', email: '', message: '', botcheck: false })
   const [sent, setSent] = useState(false)
   const [sending, setSending] = useState(false)
   const [lines, setLines] = useState([
@@ -17,17 +17,46 @@ export default function Contact({ onNavigate, onBack }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    
+    // Honeypot check for spam bots
+    if (form.botcheck) {
+      console.warn("Spam detected. Aborting transmission.")
+      return
+    }
+
     if (!form.name || !form.email || !form.message) return
     setSending(true)
     setLines(prev => [...prev, `> SENDING to tiwarimayank485@gmail.com...`, '> Encoding message...'])
 
-    // Simulate async send (replace with your actual form endpoint)
-    await new Promise(r => setTimeout(r, 1800))
+    try {
+      const response = await fetch('https://api.web3forms.com/submit', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+          access_key: import.meta.env.VITE_WEB3FORMS_ACCESS_KEY,
+          name: form.name,
+          email: form.email,
+          message: form.message,
+        })
+      });
 
-    setLines(prev => [...prev, '> [200 OK] Message delivered.', '> Thank you! I\'ll reply soon.'])
-    setSending(false)
-    setSent(true)
-    setForm({ name: '', email: '', message: '' })
+      const result = await response.json();
+      
+      if (response.status === 200) {
+        setLines(prev => [...prev, '> [200 OK] Message delivered.', '> Thank you! I\'ll reply soon.'])
+        setSent(true)
+        setForm({ name: '', email: '', message: '', botcheck: false })
+      } else {
+        setLines(prev => [...prev, '> [ERROR] Transmission failed.', `> ${result.message}`])
+      }
+    } catch (error) {
+      setLines(prev => [...prev, '> [ERROR] Connection lost.', '> Please try again later.'])
+    } finally {
+      setSending(false)
+    }
   }
 
   const handleClose = () => {
@@ -57,6 +86,15 @@ export default function Contact({ onNavigate, onBack }) {
 
         {!sent ? (
           <form onSubmit={handleSubmit}>
+            {/* Honeypot Spam Protection (Invisible to humans) */}
+            <input 
+              type="checkbox" 
+              name="botcheck" 
+              style={{ display: 'none' }} 
+              checked={form.botcheck}
+              onChange={(e) => setForm({ ...form, botcheck: e.target.checked })} 
+            />
+
             <div style={{ marginBottom: 6 }}>
               <div className="terminal-line" style={{ fontSize: '0.85rem', marginBottom: 3 }}>FROM_NAME:</div>
               <input
